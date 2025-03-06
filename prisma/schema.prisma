@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  teams         Team[]
+}
+
+model Game {
+  id                String    @id @default(cuid())
+  name              String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  isLocked          Boolean   @default(false)
+  isLive            Boolean   @default(false)
+  countdownRemaining Int?
+  gameMode          String    @default("line")
+  targetNumber      Int       @default(3)
+  grid              Json      // 2D array of strings
+  teams             Team[]
+  messages          Message[]
+}
+
+model Team {
+  id            String    @id @default(cuid())
+  name          String
+  advisor       String    @default("karen")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  markedSquares Json      // Array of [row, col] coordinates
+  wins          Json      // Array of win objects
+  gameId        String
+  userId        String
+  game          Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  type      String   @default("chat") // chat, win, system
+  createdAt DateTime @default(now())
+  gameId    String
+  teamId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+} 

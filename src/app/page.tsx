@@ -1,0 +1,442 @@
+'use client';
+
+import * as React from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { useGameStore } from "@/lib/store/game-store";
+import { BingoGrid } from "@/components/bingo/BingoGrid";
+import { GameControls } from "@/components/bingo/GameControls";
+import { TeamSelector } from "@/components/bingo/TeamSelector";
+import { GameModeSelector } from "@/components/bingo/GameModeSelector";
+import { GameModeSelect } from "@/components/bingo/GameModeSelect";
+import { Leaderboard } from "@/components/bingo/Leaderboard";
+import { ApprenticeFacts } from "@/components/bingo/ApprenticeFacts";
+import { useSounds } from "@/lib/sounds";
+import { fadeIn, slideInFromBottom, slideInFromLeft, slideInFromRight, staggerChildren, boardroomBackground } from "@/lib/animations";
+import { AdvisorAnimation } from "@/components/bingo/AdvisorAnimation";
+
+// Component for the parallax background effect
+function ParallaxBackground({ children, src, opacity = 0.6 }: { children: React.ReactNode, src: string, opacity?: number }) {
+  const [offset, setOffset] = React.useState(0);
+  
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setOffset(window.scrollY * 0.5);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  return (
+    <div className="relative w-full overflow-hidden">
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{ transform: `translateY(${offset}px)` }}
+      >
+        <Image 
+          src={src} 
+          alt="Background" 
+          fill
+          priority
+          className="object-cover"
+          style={{ opacity }}
+        />
+      </div>
+      <div className="relative z-10">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  // Call all hooks at the top level
+  const teamId = useGameStore(state => state.teamId);
+  const isHost = useGameStore(state => state.isHost);
+  const isSinglePlayer = useGameStore(state => state.isSinglePlayer);
+  const teamName = useGameStore(state => state.teamName);
+  const teamAdvisor = useGameStore(state => state.teamAdvisor);
+  // Access soloSetupMode using type assertion to avoid TypeScript error
+  const soloSetupMode = useGameStore(state => (state as any).soloSetupMode);
+  const { playClick } = useSounds();
+
+  // Determine which view to show based on the state
+  const showTeamSelector = (!isSinglePlayer && teamId && !teamName) || (soloSetupMode);
+  const showGameModeSelect = !teamId && !soloSetupMode;
+  const showMainGame = teamId && (isSinglePlayer || teamName) && !soloSetupMode;
+
+  // Initialize sounds on first render
+  React.useEffect(() => {
+    // This just ensures the sounds are preloaded
+  }, []);
+
+  if (showGameModeSelect) {
+    return (
+      <motion.main 
+        className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 text-white"
+        initial="hidden"
+        animate="visible"
+        variants={staggerChildren}
+      >
+        <ParallaxBackground src="/images/theapprenticescreen.jpeg" opacity={0.4}>
+          <div className="h-80 flex items-center justify-center bg-black/40">
+            <motion.h1 
+              className="text-5xl font-bold text-center drop-shadow-lg"
+              variants={slideInFromBottom}
+            >
+              <motion.span 
+                className="block text-amber-400"
+                animate={{ 
+                  textShadow: ['0 0 8px rgba(245, 158, 11, 0)', '0 0 20px rgba(245, 158, 11, 0.5)', '0 0 8px rgba(245, 158, 11, 0)'],
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                Apprentice
+              </motion.span>
+              <span className="text-white">Bingo</span>
+            </motion.h1>
+          </div>
+        </ParallaxBackground>
+        
+        <div className="container mx-auto px-4 py-12 flex-1 relative">
+          <div className="max-w-2xl mx-auto">
+            <motion.div 
+              className="bg-gradient-to-b from-gray-800 to-gray-900 p-8 rounded-lg shadow-2xl border border-gray-700 relative overflow-hidden"
+              variants={fadeIn}
+            >
+              {/* Subtle boardroom pattern */}
+              <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+              
+              {/* Ensure GameModeSelect is in front and can receive events */}
+              <div className="relative z-10">
+                <GameModeSelect />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.main>
+    );
+  }
+
+  if (showTeamSelector) {
+    return (
+      <motion.main 
+        className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 text-white"
+        initial="hidden"
+        animate="visible"
+        variants={staggerChildren}
+      >
+        <ParallaxBackground src="/images/team.jpg" opacity={0.4}>
+          <div className="h-80 flex items-center justify-center bg-black/40">
+            <motion.h1 
+              className="text-5xl font-bold text-center drop-shadow-lg"
+              variants={slideInFromBottom}
+            >
+              <span className="block text-white">Choose Your</span>
+              <motion.span 
+                className="block text-amber-400"
+                animate={{ 
+                  textShadow: ['0 0 8px rgba(245, 158, 11, 0)', '0 0 20px rgba(245, 158, 11, 0.5)', '0 0 8px rgba(245, 158, 11, 0)'],
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                Team
+              </motion.span>
+            </motion.h1>
+          </div>
+        </ParallaxBackground>
+        
+        <div className="container mx-auto px-4 py-12 flex-1">
+          <div className="max-w-2xl mx-auto">
+            <motion.div 
+              className="bg-gradient-to-b from-gray-800 to-gray-900 p-8 rounded-lg shadow-2xl border border-gray-700 overflow-hidden relative"
+              variants={fadeIn}
+            >
+              {/* Subtle boardroom pattern */}
+              <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+              
+              {/* Ensure TeamSelector is in front and can receive events */}
+              <div className="relative z-10">
+                <TeamSelector />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.main>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.main 
+        className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white"
+        initial="hidden"
+        animate="visible"
+        variants={staggerChildren}
+        key="main-game"
+      >
+        <ParallaxBackground src="/images/skylinebackground.jpg" opacity={0.4}>
+          <div className="h-56 flex items-center justify-center bg-black/40">
+            <motion.h1 
+              className="text-4xl md:text-5xl font-bold text-center drop-shadow-lg"
+              variants={slideInFromBottom}
+            >
+              <motion.span 
+                className="block text-amber-400"
+                animate={{ 
+                  textShadow: ['0 0 8px rgba(245, 158, 11, 0)', '0 0 20px rgba(245, 158, 11, 0.5)', '0 0 8px rgba(245, 158, 11, 0)'],
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                Apprentice
+              </motion.span>
+              <span className="text-white">Bingo</span>
+            </motion.h1>
+          </div>
+        </ParallaxBackground>
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left sidebar - Game mode selection */}
+            <motion.div 
+              className="lg:col-span-3"
+              variants={slideInFromLeft}
+              custom={1}
+            >
+              <motion.div 
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Subtle boardroom pattern */}
+                <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+                
+                <motion.div className="relative z-10">
+                  {isHost && <GameModeSelector />}
+                  <motion.div 
+                    className="mt-4 flex items-center justify-center"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  >
+                    <AdvisorAnimation
+                      type="lord-sugar"
+                      size="large"
+                      className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
+                    />
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+
+            {/* Main content - Bingo grid and controls */}
+            <motion.div 
+              className="lg:col-span-6 space-y-6"
+              variants={fadeIn}
+              custom={0}
+            >
+              <motion.div 
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                whileHover={{ y: -3, boxShadow: "0 20px 30px rgba(0, 0, 0, 0.3)" }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Subtle boardroom pattern */}
+                <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+                <div className="relative z-10">
+                  <BingoGrid />
+                </div>
+              </motion.div>
+              
+              <motion.div 
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                whileHover={{ y: -3, boxShadow: "0 20px 30px rgba(0, 0, 0, 0.3)" }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Subtle boardroom pattern */}
+                <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+                <div className="relative z-10">
+                  <GameControls />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Right sidebar - Leaderboard */}
+            <motion.div 
+              className="lg:col-span-3"
+              variants={slideInFromRight}
+              custom={1}
+            >
+              <motion.div 
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-5 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden"
+                whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Subtle boardroom pattern */}
+                <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+                
+                <div className="relative z-10 flex flex-col">
+                  <Leaderboard />
+                  
+                  {showMainGame && teamAdvisor && (
+                    <motion.div 
+                      className="mt-6"
+                      variants={staggerChildren}
+                    >
+                      <h3 className="text-center text-white text-sm mb-3">Your Advisor</h3>
+                      <div className="flex justify-center">
+                        <motion.div
+                          whileHover={{ 
+                            scale: 1.05, 
+                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => playClick()}
+                          custom={0}
+                          variants={fadeIn}
+                          className="flex flex-col items-center"
+                        >
+                          <AdvisorAnimation
+                            type="advisor"
+                            variant={teamAdvisor}
+                            size="medium"
+                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                          />
+                          <span className="text-sm text-gray-300 mt-2 font-medium capitalize">{teamAdvisor}</span>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {!showMainGame && (
+                    <motion.div 
+                      className="mt-6"
+                      variants={staggerChildren}
+                    >
+                      <h3 className="text-center text-white text-sm mb-3">Available Advisors</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                        <motion.div
+                          whileHover={{ 
+                            scale: 1.05, 
+                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => playClick()}
+                          custom={0}
+                          variants={fadeIn}
+                          className="flex flex-col items-center"
+                        >
+                          <AdvisorAnimation
+                            type="advisor"
+                            variant="karen"
+                            size="small"
+                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 mt-1">Karen</span>
+                        </motion.div>
+                        
+                        <motion.div
+                          whileHover={{ 
+                            scale: 1.05, 
+                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => playClick()}
+                          custom={1}
+                          variants={fadeIn}
+                          className="flex flex-col items-center"
+                        >
+                          <AdvisorAnimation
+                            type="advisor"
+                            variant="tim"
+                            size="small"
+                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 mt-1">Tim</span>
+                        </motion.div>
+                        
+                        <motion.div
+                          whileHover={{ 
+                            scale: 1.05, 
+                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => playClick()}
+                          custom={2}
+                          variants={fadeIn}
+                          className="flex flex-col items-center"
+                        >
+                          <AdvisorAnimation
+                            type="advisor"
+                            variant="claude"
+                            size="small"
+                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 mt-1">Claude</span>
+                        </motion.div>
+                        
+                        <motion.div
+                          whileHover={{ 
+                            scale: 1.05, 
+                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => playClick()}
+                          custom={3}
+                          variants={fadeIn}
+                          className="flex flex-col items-center"
+                        >
+                          <AdvisorAnimation
+                            type="advisor"
+                            variant="nick"
+                            size="small"
+                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 mt-1">Nick</span>
+                        </motion.div>
+                        
+                        <motion.div
+                          whileHover={{ 
+                            scale: 1.05, 
+                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => playClick()}
+                          custom={4}
+                          variants={fadeIn}
+                          className="flex flex-col items-center"
+                        >
+                          <AdvisorAnimation
+                            type="advisor"
+                            variant="margaret"
+                            size="small"
+                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 mt-1">Margaret</span>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {/* Apprentice Facts Component */}
+                  <motion.div 
+                    className="mt-6"
+                    variants={slideInFromBottom}
+                    custom={2}
+                  >
+                    <ApprenticeFacts />
+                  </motion.div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.main>
+    </AnimatePresence>
+  );
+} 
