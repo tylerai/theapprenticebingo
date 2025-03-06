@@ -1,5 +1,11 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "env": {
+    "NODE_ENV": "production",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
 } 
