@@ -26,6 +26,7 @@ if (!fs.existsSync(storeDir)) {
 const gameStoreContent = `
 import { create } from 'zustand';
 import { GameMode, Team, Win } from '../types';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 // Initial state
 const initialState = {
@@ -47,6 +48,7 @@ const initialState = {
   targetNumber: 5,
   wins: [],
   previousWins: [],
+  soloSetupMode: false, // Added explicitly
 };
 
 // Define the interface for the game state
@@ -65,6 +67,7 @@ export interface GameState {
   targetNumber: number;
   wins: Win[];
   previousWins: Win[];
+  soloSetupMode: boolean; // Added explicitly
 }
 
 // Define the interface for the game store
@@ -84,138 +87,149 @@ export interface GameStore extends GameState {
   prepareSoloMode: () => void;
 }
 
-// Create the actual store
-export const useGameStore = create<GameStore>((set, get) => ({
-  ...initialState,
+// Create the actual store with persistence
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  // Basic functionality
-  initGame: (mode) => {
-    // Simulate initializing a game
-    set({ 
-      gameMode: mode, 
-      isLive: true,
-      teamId: 'team1',
-      teamName: 'Demo Team',
-      isSinglePlayer: true
-    });
-  },
+      // Basic functionality
+      initGame: (mode) => {
+        // Simulate initializing a game
+        set({ 
+          gameMode: mode, 
+          isLive: true,
+          teamId: 'team1',
+          teamName: 'Demo Team',
+          isSinglePlayer: true
+        });
+      },
 
-  setTeams: (teams) => {
-    set({ teams });
-  },
+      setTeams: (teams) => {
+        set({ teams });
+      },
 
-  setGrid: (grid) => {
-    set({ grid });
-  },
+      setGrid: (grid) => {
+        set({ grid });
+      },
 
-  toggleSquare: (row, col) => {
-    const { markedSquares } = get();
-    const isAlreadyMarked = markedSquares.some(
-      ([r, c]) => r === row && c === col
-    );
+      toggleSquare: (row, col) => {
+        const { markedSquares } = get();
+        const isAlreadyMarked = markedSquares.some(
+          ([r, c]) => r === row && c === col
+        );
 
-    if (isAlreadyMarked) {
-      set({
-        markedSquares: markedSquares.filter(
-          ([r, c]) => !(r === row && c === col)
-        ),
-      });
-    } else {
-      set({
-        markedSquares: [...markedSquares, [row, col]],
-      });
+        if (isAlreadyMarked) {
+          set({
+            markedSquares: markedSquares.filter(
+              ([r, c]) => !(r === row && c === col)
+            ),
+          });
+        } else {
+          set({
+            markedSquares: [...markedSquares, [row, col] as [number, number]],
+          });
+        }
+      },
+
+      addWin: (win) => {
+        const { wins, previousWins } = get();
+        set({ 
+          wins: [...wins, win],
+          previousWins: [...previousWins, win]
+        });
+      },
+
+      setGameMode: (mode) => {
+        set({ gameMode: mode });
+      },
+
+      setTargetNumber: (num) => {
+        set({ targetNumber: num });
+      },
+
+      resetMarks: () => {
+        set({ markedSquares: [] });
+      },
+
+      regenerateCard: (seed) => {
+        // Just keep the same grid for the placeholder
+        const { grid } = get();
+        set({ grid: [...grid] });
+      },
+
+      resetGame: () => {
+        set(initialState);
+      },
+
+      // Functions that start the game modes
+      initSinglePlayerMode: () => {
+        // Implementation for Single Player mode
+        set({ 
+          teamId: 'solo1',
+          teamName: 'Solo Player',
+          teamAdvisor: 'karen',
+          isSinglePlayer: true,
+          isHost: true,
+          // Generate a simple grid if needed
+          grid: [
+            ['Option 1', 'Option 2', 'Option 3'],
+            ['Option 4', 'Option 5', 'Option 6'],
+            ['Option 7', 'Option 8', 'Option 9']
+          ],
+        });
+        
+        // Use history API instead of reload
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', '/');
+          window.dispatchEvent(new Event('popstate'));
+        }
+      },
+
+      initQuickGameMode: () => {
+        // Implementation for Quick Game mode
+        set({ 
+          teamId: 'quick1',
+          teamName: 'Quick Player',
+          teamAdvisor: 'tim',
+          isSinglePlayer: true,
+          isHost: true,
+          // Generate a simple grid
+          grid: [
+            ['Option 1', 'Option 2', 'Option 3'],
+            ['Option 4', 'Option 5', 'Option 6'],
+            ['Option 7', 'Option 8', 'Option 9']
+          ],
+        });
+        
+        // Use history API instead of reload
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', '/');
+          window.dispatchEvent(new Event('popstate'));
+        }
+      },
+
+      prepareSoloMode: () => {
+        // Implementation for preparing solo mode
+        set({ 
+          isSinglePlayer: true,
+          soloSetupMode: true,
+          teamId: 'solo-setup'
+        });
+        
+        // Use history API instead of reload
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', '/');
+          window.dispatchEvent(new Event('popstate'));
+        }
+      }
+    }),
+    {
+      name: 'apprentice-bingo-storage',
+      storage: createJSONStorage(() => localStorage),
     }
-  },
-
-  addWin: (win) => {
-    const { wins, previousWins } = get();
-    set({ 
-      wins: [...wins, win],
-      previousWins: [...previousWins, win]
-    });
-  },
-
-  setGameMode: (mode) => {
-    set({ gameMode: mode });
-  },
-
-  setTargetNumber: (num) => {
-    set({ targetNumber: num });
-  },
-
-  resetMarks: () => {
-    set({ markedSquares: [] });
-  },
-
-  regenerateCard: (seed) => {
-    // Just keep the same grid for the placeholder
-    const { grid } = get();
-    set({ grid: [...grid] });
-  },
-
-  resetGame: () => {
-    set(initialState);
-  },
-
-  // Functions that start the game modes
-  initSinglePlayerMode: () => {
-    // Implementation for Single Player mode
-    set({ 
-      teamId: 'solo1',
-      teamName: 'Solo Player',
-      teamAdvisor: 'karen',
-      isSinglePlayer: true,
-      isHost: true,
-      // Generate a simple grid if needed
-      grid: [
-        ['Option 1', 'Option 2', 'Option 3'],
-        ['Option 4', 'Option 5', 'Option 6'],
-        ['Option 7', 'Option 8', 'Option 9']
-      ],
-    });
-    
-    // Force navigation to the game page
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  },
-
-  initQuickGameMode: () => {
-    // Implementation for Quick Game mode
-    set({ 
-      teamId: 'quick1',
-      teamName: 'Quick Player',
-      teamAdvisor: 'tim',
-      isSinglePlayer: true,
-      isHost: true,
-      // Generate a simple grid
-      grid: [
-        ['Option 1', 'Option 2', 'Option 3'],
-        ['Option 4', 'Option 5', 'Option 6'],
-        ['Option 7', 'Option 8', 'Option 9']
-      ],
-    });
-    
-    // Force navigation to the game page
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  },
-
-  prepareSoloMode: () => {
-    // Implementation for preparing solo mode
-    set({ 
-      isSinglePlayer: true,
-      soloSetupMode: true,
-      teamId: 'solo-setup'
-    });
-    
-    // Force navigation to the next page
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  }
-}));
+  )
+);
 `;
 
 // List of files to create
