@@ -75,6 +75,24 @@ function getRandomOptions(count) {
   return shuffled.slice(0, count);
 }
 
+// Function to get random bingo options from a static list
+function getRandomBingoOptions(count) {
+  const options = [
+    "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
+    "Candidate back-seat drives", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
+    "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
+    "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
+    "Lord Sugar makes a pun", "Team makes a loss", "Bitchy impersonation", "Stupid assumption",
+    "Wasted journey", "Team doesn't research", "Everyone interrupts", "Candidate answers phone in towel",
+    "Boardroom betrayal", "Karen gives death stare", "Claude gets angry", "Lord Sugar mentions East End",
+    "Double firing!", "Triple firing!", "Project Manager changes"
+  ];
+  
+  // Shuffle and pick options
+  const shuffled = [...options].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
 // Create a more functional implementation of game-store.ts
 const gameStoreContent = `
 import { create } from 'zustand';
@@ -193,24 +211,6 @@ function checkForWins(grid, markedSquares, gameMode, targetNumber) {
   return filteredWins;
 }
 
-// Function to get random bingo options from a static list
-function getRandomBingoOptions(count) {
-  const options = [
-    "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
-    "Candidate back-seat drives", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
-    "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
-    "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
-    "Lord Sugar makes a pun", "Team makes a loss", "Bitchy impersonation", "Stupid assumption",
-    "Wasted journey", "Team doesn't research", "Everyone interrupts", "Candidate answers phone in towel",
-    "Boardroom betrayal", "Karen gives death stare", "Claude gets angry", "Lord Sugar mentions East End",
-    "Double firing!", "Triple firing!", "Project Manager changes"
-  ];
-  
-  // Shuffle and pick options
-  const shuffled = [...options].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
-}
-
 // Create the actual store with persistence
 export const useGameStore = create(
   persist(
@@ -219,44 +219,69 @@ export const useGameStore = create(
 
       // Reset the entire game state
       resetGame: () => {
-        set({ ...initialState });
-        
-        // Generate a fresh grid
-        const options = getRandomBingoOptions(9);
-        const grid = [];
-        for (let i = 0; i < 3; i++) {
-          const row = [];
-          for (let j = 0; j < 3; j++) {
-            row.push(options[i * 3 + j]);
+        try {
+          console.log("Resetting game state completely");
+          // Clear localStorage first for a more thorough reset
+          if (typeof window !== 'undefined' && window.localStorage) {
+            // Don't delete everything, just the game state
+            window.localStorage.removeItem('apprentice-bingo-storage');
           }
-          grid.push(row);
-        }
-        set({ grid });
-        
-        // Force a refresh to clear the UI state
-        if (typeof window !== 'undefined') {
-          window.location.href = '/';
+          
+          set({ ...initialState });
+          
+          // Generate a fresh grid
+          const options = getRandomBingoOptions(9);
+          const grid = [];
+          for (let i = 0; i < 3; i++) {
+            const row = [];
+            for (let j = 0; j < 3; j++) {
+              row.push(options[i * 3 + j]);
+            }
+            grid.push(row);
+          }
+          set({ grid });
+          
+          // Force a refresh to clear the UI state
+          if (typeof window !== 'undefined') {
+            console.log("Navigating to home page");
+            window.location.href = '/';
+          }
+        } catch (error) {
+          console.error("Error during game reset:", error);
+          // Fallback - at least try to clear the state
+          set({ ...initialState });
         }
       },
       
       // Hard reset that clears localStorage
       hardReset: () => {
-        // Clear localStorage first
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.removeItem('apprentice-bingo-storage');
-        }
-        
-        // Reset state
-        set({ ...initialState });
-        
-        // Force a refresh
-        if (typeof window !== 'undefined') {
-          window.location.href = '/';
+        try {
+          console.log("Performing HARD reset");
+          // Clear localStorage first
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.removeItem('apprentice-bingo-storage');
+          }
+          
+          // Reset state
+          set({ ...initialState });
+          
+          // Force a refresh
+          if (typeof window !== 'undefined') {
+            console.log("Force refreshing page");
+            window.location.href = '/?reset=' + Date.now();
+          }
+        } catch (error) {
+          console.error("Error during hard reset:", error);
+          // Fallback reload
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
         }
       },
 
       // Initialize a new game
       initGame: (gameId, teamId, teamName, advisor) => {
+        console.log("Initializing game:", { gameId, teamId, teamName, advisor });
         // First, reset the state completely to avoid any stale data
         set({ ...initialState });
         
@@ -297,10 +322,20 @@ export const useGameStore = create(
           grid.push(row);
         }
         set({ grid });
+        
+        console.log("Game initialized with grid:", grid);
       },
 
       toggleSquare: (row, col) => {
-        const { markedSquares, gameMode, targetNumber, grid, previousWins } = get();
+        console.log("Toggling square:", row, col);
+        const { markedSquares, gameMode, targetNumber, grid, previousWins, isLocked } = get();
+        
+        // Don't allow toggling if the game is locked
+        if (isLocked) {
+          console.log("Game is locked, cannot toggle square");
+          return;
+        }
+        
         const isAlreadyMarked = markedSquares.some(
           ([r, c]) => r === row && c === col
         );
@@ -322,40 +357,77 @@ export const useGameStore = create(
         wins.forEach(win => {
           const isNewWin = !previousWins.some(prev => prev.type === win.type);
           if (isNewWin) {
+            console.log("New win detected:", win.type);
             get().addWin(win);
+            
+            // Check if the win should lock the game (full house or target number)
+            if ((gameMode === 'full_house' && win.type === 'full_house') || 
+                (gameMode === 'number' && win.type.startsWith('number_'))) {
+              console.log("Win condition met - locking game");
+              set({ isLocked: true });
+            }
           }
         });
       },
 
       addWin: (win) => {
         const { wins, previousWins } = get();
+        console.log("Adding win:", win.type);
         set({ 
           wins: [...wins, win],
           previousWins: [...previousWins, win]
         });
+        
+        // Play winning sound effect if in browser
+        if (typeof window !== 'undefined') {
+          try {
+            // Dispatch a custom event that can be listened for to play sounds
+            const winEvent = new CustomEvent('bingo-win', { detail: win });
+            window.dispatchEvent(winEvent);
+          } catch (error) {
+            console.error("Error dispatching win event:", error);
+          }
+        }
       },
 
       setTeams: (teams) => {
+        console.log("Setting teams:", teams.length);
         set({ teams });
       },
 
       setGrid: (grid) => {
+        console.log("Setting new grid with " + grid.length + " rows");
         set({ grid });
       },
 
       setGameMode: (mode) => {
+        console.log("Setting game mode to:", mode);
         set({ gameMode: mode });
+        
+        // Reset marked squares and wins when changing mode
+        set({
+          markedSquares: [],
+          wins: [],
+          previousWins: []
+        });
       },
 
       setTargetNumber: (num) => {
-        set({ targetNumber: num });
+        console.log("Setting target number to:", num);
+        if (num >= 1 && num <= 9) {
+          set({ targetNumber: num });
+        } else {
+          console.error("Invalid target number:", num);
+        }
       },
 
       setIsLocked: (locked) => {
+        console.log("Setting locked state to:", locked);
         set({ isLocked: locked });
       },
 
       setIsLive: (live) => {
+        console.log("Setting live state to:", live);
         set({ isLive: live });
       },
 
@@ -364,12 +436,18 @@ export const useGameStore = create(
       },
 
       resetMarks: () => {
-        set({ markedSquares: [] });
+        console.log("Resetting all marked squares");
+        set({ 
+          markedSquares: [],
+          wins: [],
+          previousWins: []
+        });
       },
 
       regenerateCard: (seed) => {
+        console.log("Regenerating card" + (seed ? " with seed: " + seed : ""));
         // Generate new bingo options
-        const options = getRandomBingoOptions(9);
+        const options = seed ? getRandomBingoOptions(9) : getRandomBingoOptions(9);
         const grid = [];
         for (let i = 0; i < 3; i++) {
           const row = [];
@@ -378,33 +456,48 @@ export const useGameStore = create(
           }
           grid.push(row);
         }
+        
+        // Reset game state with new grid
         set({ 
           grid,
           markedSquares: [], // Reset marked squares when card is regenerated
           wins: [],          // Reset wins when card is regenerated
-          previousWins: []   // Reset previous wins when card is regenerated
+          previousWins: [],  // Reset previous wins when card is regenerated
+          isLocked: false    // Unlock the game
         });
+        
+        console.log("Card regenerated with new content");
         
         // Force a refresh to show the new card
         if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', '/');
-          window.dispatchEvent(new Event('popstate'));
+          // Use a cleaner approach by just triggering a UI refresh
+          try {
+            window.history.pushState({}, '', window.location.pathname);
+            window.dispatchEvent(new Event('popstate'));
+            // Also dispatch a custom event that can be listened for
+            const regenerateEvent = new CustomEvent('card-regenerated');
+            window.dispatchEvent(regenerateEvent);
+          } catch (error) {
+            console.error("Error refreshing after card regeneration:", error);
+          }
         }
       },
 
       // Functions that start the game modes
       initSinglePlayerMode: (teamName = 'Solo Player', advisor = 'karen') => {
+        console.log("Initializing single player mode:", { teamName, advisor });
         // Implementation for Single Player mode
         set({ 
           teamId: 'solo-' + Date.now(),
-          teamName: teamName,
+          teamName: teamName || 'Solo Player',
           teamAdvisor: advisor,
           isSinglePlayer: true,
           isHost: true,
           soloSetupMode: false,
           markedSquares: [], // Ensure marked squares are reset
           wins: [],          // Ensure wins are reset
-          previousWins: []   // Ensure previous wins are reset
+          previousWins: [],  // Ensure previous wins are reset
+          isLocked: false    // Ensure game is unlocked
         });
         
         // Generate a grid with actual content
@@ -419,14 +512,28 @@ export const useGameStore = create(
         }
         set({ grid });
         
+        console.log("Single player mode initialized with grid");
+        
         // Use history API instead of reload
         if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', '/');
-          window.dispatchEvent(new Event('popstate'));
+          try {
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('popstate'));
+            // Dispatch a custom event
+            const gameStartEvent = new CustomEvent('game-started', { 
+              detail: { mode: 'single-player' } 
+            });
+            window.dispatchEvent(gameStartEvent);
+          } catch (error) {
+            console.error("Error during single player initialization:", error);
+            // Fallback to reload
+            window.location.href = '/';
+          }
         }
       },
 
       initQuickGameMode: () => {
+        console.log("Initializing quick game mode");
         // Implementation for Quick Game mode
         const teamNames = [
           'First Forte', 'Impact', 'Velocity', 'Invicta', 'Stealth', 'Eclipse',
@@ -447,7 +554,8 @@ export const useGameStore = create(
           soloSetupMode: false,
           markedSquares: [], // Ensure marked squares are reset
           wins: [],          // Ensure wins are reset
-          previousWins: []   // Ensure previous wins are reset
+          previousWins: [],  // Ensure previous wins are reset
+          isLocked: false    // Ensure game is unlocked
         });
         
         // Generate a grid with actual content
@@ -462,25 +570,53 @@ export const useGameStore = create(
         }
         set({ grid });
         
+        console.log("Quick game mode initialized with random team and advisor");
+        
         // Use history API instead of reload
         if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', '/');
-          window.dispatchEvent(new Event('popstate'));
+          try {
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('popstate'));
+            // Dispatch a custom event
+            const gameStartEvent = new CustomEvent('game-started', { 
+              detail: { mode: 'quick-game' } 
+            });
+            window.dispatchEvent(gameStartEvent);
+          } catch (error) {
+            console.error("Error during quick game initialization:", error);
+            // Fallback to reload
+            window.location.href = '/';
+          }
         }
       },
 
       prepareSoloMode: () => {
+        console.log("Preparing solo setup mode");
         // Implementation for preparing solo mode
         set({ 
           isSinglePlayer: true,
           soloSetupMode: true,
-          teamId: 'solo-setup-' + Date.now()
+          teamId: 'solo-setup-' + Date.now(),
+          // Reset other game state
+          markedSquares: [],
+          wins: [],
+          previousWins: [],
+          isLocked: false
         });
         
         // Use history API instead of reload
         if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', '/');
-          window.dispatchEvent(new Event('popstate'));
+          try {
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('popstate'));
+            // Dispatch a custom event
+            const setupEvent = new CustomEvent('solo-setup-started');
+            window.dispatchEvent(setupEvent);
+          } catch (error) {
+            console.error("Error during solo setup:", error);
+            // Fallback to reload
+            window.location.href = '/';
+          }
         }
       }
     }),
@@ -534,29 +670,48 @@ export function AdvisorAnimation({ advisor, animate = true }) {
     }
   };
   
+  const getAdvisorName = () => {
+    switch (advisor) {
+      case 'karen':
+        return 'Karen Brady';
+      case 'tim':
+        return 'Tim Campbell';
+      case 'claude':
+        return 'Claude Littner';
+      case 'nick':
+        return 'Nick Hewer';
+      case 'margaret':
+        return 'Margaret Mountford';
+      default:
+        return 'Karen Brady';
+    }
+  };
+  
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
+    <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
       <motion.div
-        initial={animate ? { scale: 0.9, y: 10 } : false}
+        initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
         animate={animate ? { 
           scale: [0.9, 1, 0.9],
           y: [10, 0, 10]
-        } : {}}
+        } : { scale: 1 }}
         transition={{ 
           duration: 3,
           repeat: Infinity,
           repeatType: "reverse"
         }}
-        className="relative w-full h-full"
+        className="relative w-full h-full flex items-center justify-center"
       >
-        <Image
-          src={getAdvisorImage()}
-          alt={\`Advisor \${advisor}\`}
-          fill
-          className="object-cover object-center"
-          sizes="(max-width: 768px) 100vw, 300px"
-          priority
-        />
+        <div className="overflow-hidden rounded-full w-full h-full relative">
+          <Image
+            src={getAdvisorImage()}
+            alt={\`Advisor \${getAdvisorName()}\`}
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority
+          />
+        </div>
       </motion.div>
     </div>
   );
