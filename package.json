@@ -11,7 +11,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:js": "jest --testMatch=\"**/*.test.js\"",
-    "test:nocheck": "jest --no-cache --testPathIgnorePatterns=\"\" --passWithNoTests"
+    "test:nocheck": "jest --no-cache --testPathIgnorePatterns=\"\" --passWithNoTests",
+    "vercel-build": "node vercel-build.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
