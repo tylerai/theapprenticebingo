@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useGameStore } from '@/lib/store/game-store';
 
 interface AdvisorAnimationProps {
-  type: 'lord-sugar' | 'advisor';
+  type?: 'lord-sugar' | 'advisor';
   variant?: string; 
   size?: 'small' | 'medium' | 'large';
   className?: string;
@@ -15,8 +15,44 @@ interface AdvisorAnimationProps {
   animate?: boolean;
 }
 
+// Function to get advisor name
+function getAdvisorName(advisorId: string): string {
+  switch (advisorId) {
+    case 'karen':
+      return 'Karen Brady';
+    case 'tim':
+      return 'Tim Campbell';
+    case 'claude':
+      return 'Claude Littner';
+    case 'nick':
+      return 'Nick Hewer';
+    case 'margaret':
+      return 'Margaret Mountford';
+    default:
+      return 'Karen Brady';
+  }
+}
+
+// Function to get advisor image
+function getAdvisorImage(advisorId: string): string {
+  switch (advisorId) {
+    case 'karen':
+      return '/images/karenbrady.webp';
+    case 'tim':
+      return '/images/timcambell.webp';
+    case 'claude':
+      return '/images/claude.jpg';
+    case 'nick':
+      return '/images/nick.jpg';
+    case 'margaret':
+      return '/images/margaret.jpeg';
+    default:
+      return '/images/karenbrady.webp';
+  }
+}
+
 export function AdvisorAnimation({ 
-  type, 
+  type = 'advisor', 
   variant = '0', 
   className = '',
   size = 'medium',
@@ -24,6 +60,39 @@ export function AdvisorAnimation({
   advisor,
   animate = true
 }: AdvisorAnimationProps) {
+  // Simple compatibility mode for vercel-build.js implementation
+  // If only advisor prop is provided (no explicit type prop), use the simplified rendering
+  if (advisor && (!type || type === 'advisor')) {
+    return (
+      <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg ${className}`}>
+        <motion.div
+          initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
+          animate={animate ? { 
+            scale: [0.9, 1, 0.9],
+            y: [10, 0, 10]
+          } : { scale: 1 }}
+          transition={{ 
+            duration: 3,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          className="relative w-full h-full flex items-center justify-center"
+        >
+          <div className="overflow-hidden rounded-full w-full h-full relative">
+            <Image
+              src={getAdvisorImage(advisor)}
+              alt={`Advisor ${getAdvisorName(advisor)}`}
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority
+            />
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   const { teamAdvisor, wins, markedSquares } = useGameStore();
   const [currentGif, setCurrentGif] = React.useState<string>('');
   
@@ -147,44 +216,6 @@ export function AdvisorAnimation({
     }
   };
   
-  // Function to get advisor name (for legacy compatibility)
-  const getAdvisorName = () => {
-    const currentAdvisor = advisor || variant;
-    switch (currentAdvisor) {
-      case 'karen':
-        return 'Karen Brady';
-      case 'tim':
-        return 'Tim Campbell';
-      case 'claude':
-        return 'Claude Littner';
-      case 'nick':
-        return 'Nick Hewer';
-      case 'margaret':
-        return 'Margaret Mountford';
-      default:
-        return 'Karen Brady';
-    }
-  };
-  
-  // Function to get advisor image (for legacy compatibility)
-  const getAdvisorImage = () => {
-    const currentAdvisor = advisor || variant;
-    switch (currentAdvisor) {
-      case 'karen':
-        return '/images/karenbrady.webp';
-      case 'tim':
-        return '/images/timcambell.webp';
-      case 'claude':
-        return '/images/claude.jpg';
-      case 'nick':
-        return '/images/nick.jpg';
-      case 'margaret':
-        return '/images/margaret.jpeg';
-      default:
-        return '/images/karenbrady.webp';
-    }
-  };
-  
   // Determine dimensions based on size
   const getDimensions = () => {
     switch (size) {
@@ -216,107 +247,48 @@ export function AdvisorAnimation({
     setImgSrc(getGifSource());
   }, [variant, type, currentGif, advisor]);
   
-  // Simple advisor rendering for compatibility with vercel-build.js implementation
-  if (advisor && type === 'advisor') {
-    return (
-      <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
+  // Original component rendering
+  return (
+    <div className={className}>
+      {imgSrc.endsWith('.webm') ? (
+        // Render WebM as video
         <motion.div
-          initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
-          animate={animate ? { 
-            scale: [0.9, 1, 0.9],
-            y: [10, 0, 10]
-          } : { scale: 1 }}
-          transition={{ 
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-          className="relative w-full h-full flex items-center justify-center"
+          whileHover={{ scale: 1.02 }}
+          className="rounded-lg overflow-hidden bg-black relative"
+          style={{ width, height }}
         >
-          <div className="overflow-hidden rounded-full w-full h-full relative">
+          <video
+            src={imgSrc}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            onError={handleError}
+          />
+        </motion.div>
+      ) : (
+        // Render static image
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className={`rounded-lg overflow-hidden relative ${type === 'advisor' ? 'rounded-full' : ''}`}
+          style={{ width, height }}
+        >
+          <div className="w-full h-full relative">
             <Image
-              src={getAdvisorImage()}
-              alt={`Advisor ${getAdvisorName()}`}
+              src={type === 'advisor' ? 
+                (advisor ? getAdvisorImage(advisor) : ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg') : 
+                '/images/alansugar.jpg'}
+              alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
               fill
               className="object-cover object-center"
+              onError={handleError}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority
             />
           </div>
         </motion.div>
-      </div>
-    );
-  }
-  
-  // Original component rendering
-  return (
-    <motion.div
-      className={`relative overflow-hidden ${className}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      {/* Background blur for consistency */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center blur-sm opacity-40 scale-110 z-0"
-        style={{ backgroundImage: `url(${imgSrc})` }}
-      />
-      
-      {/* Overlay gradient for consistency */}
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-gray-900/20 z-10" />
-      
-      {/* Main content */}
-      <div className="relative z-0">
-        {imgSrc.endsWith('.webm') ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            width={width}
-            height={height}
-            style={{ 
-              objectFit: "cover", 
-              borderRadius: type === 'advisor' ? '50%' : '8px',
-              width,
-              height,
-              position: 'relative',
-              zIndex: 5
-            }}
-            onError={handleError}
-          >
-            <source src={imgSrc} type="video/webm" />
-            <Image
-              src={type === 'advisor' ? 
-                (advisor ? getAdvisorImage() : ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg') : 
-                '/images/alansugar.jpg'}
-              alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${variant}`}
-              width={width}
-              height={height}
-              style={{ objectFit: "cover", borderRadius: type === 'advisor' ? '50%' : '8px' }}
-            />
-          </video>
-        ) : (
-          <Image
-            src={imgSrc}
-            alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
-            width={width}
-            height={height}
-            style={{ 
-              objectFit: "cover", 
-              borderRadius: type === 'advisor' ? '50%' : '8px',
-              position: 'relative',
-              zIndex: 5
-            }}
-            onError={handleError}
-          />
-        )}
-      </div>
-      
-      {/* Subtle shine effect */}
-      <div 
-        className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent z-20 pointer-events-none"
-      />
-    </motion.div>
+      )}
+    </div>
   );
 } 

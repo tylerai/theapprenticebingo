@@ -83,7 +83,7 @@ export function TeamSelector() {
       <Card className="w-full overflow-hidden relative bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl border-amber-800/30">
         <CardHeader className="relative z-10 border-b border-gray-800">
           <CardTitle className="text-2xl flex items-center">
-            <span className="text-amber-500 mr-2">🏢</span> Create Your Team
+            <span className="text-amber-500 mr-2">🏢</span> <span className="text-white">Create Your Team</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 relative z-10">

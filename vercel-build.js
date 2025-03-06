@@ -716,17 +716,17 @@ export function AdvisorAnimation({ advisor, animate = true }) {
   const getAdvisorImage = () => {
     switch (advisor) {
       case 'karen':
-        return '/images/advisors/karen.png';
+        return '/images/karenbrady.webp';
       case 'tim':
-        return '/images/advisors/tim.png';
+        return '/images/timcambell.webp';
       case 'claude':
-        return '/images/advisors/claude.png';
+        return '/images/claude.jpg';
       case 'nick':
-        return '/images/advisors/nick.png';
+        return '/images/nick.jpg';
       case 'margaret':
-        return '/images/advisors/margaret.png';
+        return '/images/margaret.jpeg';
       default:
-        return '/images/advisors/karen.png';
+        return '/images/karenbrady.webp';
     }
   };
   

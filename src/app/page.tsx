@@ -333,11 +333,13 @@ export default function Home() {
                             boxShadow: "0 0 15px rgba(245, 158, 11, 0.3)"
                           }}
                           transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                          className="w-24 h-24 sm:w-32 sm:h-32"
                         >
                           <AdvisorAnimation
                             type="advisor"
                             advisor={teamAdvisor}
-                            className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-amber-700/30 shadow-lg"
+                            size="large"
+                            animate={true}
                           />
                         </motion.div>
                       </div>
