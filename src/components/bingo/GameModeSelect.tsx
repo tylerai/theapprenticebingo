@@ -2,30 +2,27 @@
 
 import * as React from "react";
 import { useGameStore } from "@/lib/store/game-store";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useSounds } from "@/lib/sounds";
-import { fadeIn, staggerChildren } from "@/lib/animations";
 import { GiPartyPopper, GiDiceSixFacesFour } from "react-icons/gi";
-import { FaUsers, FaUserFriends, FaClipboard, FaUserSecret } from "react-icons/fa";
-import { FiCheck, FiCopy } from "react-icons/fi";
-import { HiOutlineLightningBolt } from "react-icons/hi";
+import { FaUsers, FaUserFriends, FaClipboard, FaUserSecret, FaTrophy, FaTv } from "react-icons/fa";
+import { FiCheck, FiCopy, FiArrowRight } from "react-icons/fi";
 import { BsFillLightningChargeFill } from "react-icons/bs";
+import { HiOutlineLightningBolt, HiOutlineSparkles } from "react-icons/hi";
 import Image from "next/image";
 
 export function GameModeSelect() {
   const [gameCode, setGameCode] = React.useState("");
   const [createdGameCode, setCreatedGameCode] = React.useState("");
   const [showCopiedMessage, setShowCopiedMessage] = React.useState(false);
+  const [activeSection, setActiveSection] = React.useState<'main' | 'join'>('main');
   const initSinglePlayerMode = useGameStore(state => state.initSinglePlayerMode);
   const initQuickGameMode = useGameStore(state => state.initQuickGameMode);
   const prepareSoloMode = useGameStore(state => state.prepareSoloMode);
   const initGame = useGameStore(state => state.initGame);
   const { playClick, playSuccess } = useSounds();
-  const [rotateX, setRotateX] = React.useState(0);
-  const [rotateY, setRotateY] = React.useState(0);
 
   const handleJoinGame = () => {
     if (gameCode.trim()) {
@@ -40,29 +37,25 @@ export function GameModeSelect() {
   };
 
   const handleCreateGame = () => {
-    // Create a more user-friendly code that's easier to remember
     playClick();
-    const randomCode = Math.floor(1000 + Math.random() * 9000); // 4-digit number
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
     const gameCode = `bingo-${randomCode}`;
     setCreatedGameCode(gameCode);
     initGame(
       gameCode,
       `team-${Date.now()}`,
-      "",  // Team name will be set in TeamSelector
-      'karen'  // Default advisor, will be set in TeamSelector
+      "",
+      'karen'
     );
   };
 
   const handleSinglePlayerMode = () => {
     playClick();
-    // Use prepareSoloMode instead of directly initializing the solo game
-    // This will show the team name and advisor selection screen
     prepareSoloMode();
   };
 
   const handleQuickGameMode = () => {
     playClick();
-    // Start a quick game with auto-selected team name and advisor
     initQuickGameMode();
   };
 
@@ -73,314 +66,330 @@ export function GameModeSelect() {
     setTimeout(() => setShowCopiedMessage(false), 2000);
   };
 
-  // Handle Enter key for joining a game
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && gameCode.trim()) {
       handleJoinGame();
     }
   };
-  
-  // 3D card effect for mouse movement
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    // Calculate rotation based on mouse position
-    const rotationIntensity = 10; // max degrees of rotation
-    const newRotateX = -((e.clientY - centerY) / (rect.height / 2)) * rotationIntensity;
-    const newRotateY = ((e.clientX - centerX) / (rect.width / 2)) * rotationIntensity;
-    
-    setRotateX(newRotateX);
-    setRotateY(newRotateY);
-  };
-  
-  const handleMouseLeave = () => {
-    // Reset rotation when mouse leaves
-    setRotateX(0);
-    setRotateY(0);
-  };
 
   if (createdGameCode) {
     return (
-      <motion.div 
-        className="min-h-[60vh] flex flex-col items-center justify-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
         <motion.div 
-          className="w-full max-w-md bg-gradient-to-br from-green-800 to-green-950 p-8 rounded-2xl shadow-[0_10px_40px_rgba(34,197,94,0.2)] border border-green-500/30"
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="max-w-lg w-full p-8 bg-gradient-to-br from-amber-950 to-black rounded-3xl shadow-2xl border border-amber-700/20 overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="text-center">
+          <div className="relative overflow-hidden bg-black/40 rounded-xl p-6 mb-6 border border-amber-700/30">
             <motion.div 
-              className="inline-block mb-4 text-5xl text-green-300"
+              className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl" 
               animate={{ 
-                y: [0, -10, 0],
-                rotate: [0, -5, 0, 5, 0],
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.5, 0.3]
               }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <GiPartyPopper />
-            </motion.div>
-            <h2 className="text-2xl font-bold text-green-100 mb-2">Game Created!</h2>
-            <p className="text-green-200 mb-4">Share this code with friends to join your game:</p>
+              transition={{ duration: 5, repeat: Infinity }}
+            />
             
-            <div className="relative w-full max-w-xs mx-auto mb-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 blur-lg opacity-30 rounded-lg" />
-              <motion.div 
-                className="relative bg-gradient-to-br from-green-900 to-green-950 p-4 rounded-lg border border-green-500/20 backdrop-blur-sm font-mono text-2xl text-green-300 flex items-center justify-center"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            <h2 className="text-2xl font-semibold text-white mb-2 flex items-center">
+              <GiPartyPopper className="text-amber-400 mr-3 text-3xl" />
+              Game Created!
+            </h2>
+            
+            <p className="text-amber-200/80 mb-4">
+              Share this code with your friends to let them join your game.
+            </p>
+            
+            <div className="relative">
+              <div className="p-4 bg-amber-900/30 rounded-lg border border-amber-700/30 font-mono text-xl text-center text-white relative">
+                {createdGameCode}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/10 to-transparent animate-pulse pointer-events-none" />
+              </div>
+              
+              <motion.button
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-amber-800/50 hover:bg-amber-700/70 rounded-full text-white"
+                onClick={copyGameCode}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="tracking-wider">{createdGameCode}</span>
-              </motion.div>
+                {showCopiedMessage ? <FiCheck /> : <FiCopy />}
+              </motion.button>
             </div>
             
-            <motion.button
-              className="bg-green-600 hover:bg-green-500 text-white rounded-full px-6 py-3 flex items-center justify-center space-x-2 mx-auto transition-all shadow-lg hover:shadow-green-500/25"
-              whileTap={{ scale: 0.95 }}
-              onClick={copyGameCode}
+            {showCopiedMessage && (
+              <div className="mt-2 text-center text-amber-300 text-sm">
+                Code copied to clipboard!
+              </div>
+            )}
+          </div>
+          
+          <p className="text-white/80 text-center mb-6">
+            Waiting for players to join...
+          </p>
+          
+          <div className="flex justify-center">
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-amber-600 hover:bg-amber-700 px-6 py-2 rounded-full shadow-lg"
             >
-              {showCopiedMessage ? (
-                <>
-                  <FiCheck className="text-lg" />
-                  <span>Copied!</span>
-                </>
-              ) : (
-                <>
-                  <FiCopy className="text-lg" />
-                  <span>Copy Code</span>
-                </>
-              )}
-            </motion.button>
-            
-            <p className="text-green-300/70 text-sm mt-6">
-              Players can enter this code to join your game.<br />
-              Wait for them to connect before starting.
-            </p>
+              Cancel & Return Home
+            </Button>
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div 
-      className="min-h-[75vh] py-8"
-      variants={staggerChildren}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Banner */}
-      <motion.div 
-        className="w-full max-w-4xl mx-auto mb-12 relative rounded-2xl overflow-hidden"
-        variants={fadeIn}
-        custom={0}
-        whileHover={{ scale: 1.02 }}
-        transition={{ type: "spring", stiffness: 300, damping: 15 }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/90 to-amber-700/90 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10" />
+    <div className="relative min-h-[80vh] overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-3xl" />
+        <div className="absolute right-0 bottom-1/4 w-[300px] h-[300px] bg-amber-400/5 rounded-full blur-2xl" />
+        <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-3xl" />
         
-        <div className="relative z-10 py-10 px-6 md:px-10 text-center">
-          <motion.h1 
-            className="text-4xl md:text-5xl font-bold text-white mb-4"
-            animate={{ 
-              textShadow: [
-                "0 0 0px rgba(255,255,255,0)", 
-                "0 0 15px rgba(255,255,255,0.5)", 
-                "0 0 0px rgba(255,255,255,0)"
-              ]
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            Welcome to Apprentice Bingo!
-          </motion.h1>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto">
-            Play along while watching the show and mark events as they happen!
-          </p>
-        </div>
-      </motion.div>
+        {/* Subtle grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }}
+        />
+      </div>
 
-      {/* Game Mode Cards */}
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
-        {/* Solo Mode Card */}
-        <motion.div variants={fadeIn} className="col-span-1">
-          <Card 
-            className="bg-gradient-to-br from-blue-900 to-blue-950 hover:from-blue-800 hover:to-blue-900 transition-all duration-300 relative overflow-hidden border-blue-700/30 shadow-xl h-full"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{
-              transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-              transition: 'transform 0.1s'
-            }}
-          >
-            <div className="p-6 flex flex-col h-full">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shadow-glow-blue">
-                  <FaUserSecret className="text-2xl text-white" />
-                </div>
-                <h3 className="text-xl font-bold ml-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-blue-100">
-                  Single Player Mode
-                </h3>
-              </div>
-              
-              <p className="text-blue-200 opacity-80 mb-6">
-                Play on your own with customizable team name and advisor selection.
-              </p>
-              
-              <div className="mt-auto flex flex-col gap-3">
-                <Button 
-                  onClick={handleSinglePlayerMode}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white"
-                >
-                  Single Player
-                </Button>
-                
-                <Button 
-                  onClick={handleQuickGameMode}
-                  className="w-full bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center gap-2"
-                >
-                  <BsFillLightningChargeFill className="text-yellow-300" />
-                  Quick Game
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Multiplayer Card */}
-        <motion.div
-          className="perspective-1000"
-          variants={fadeIn}
-          custom={2}
-          whileHover={{ scale: 1.02, zIndex: 10 }}
-        >
-          <div className="relative h-full bg-gradient-to-br from-blue-800/90 to-blue-950 rounded-2xl overflow-hidden shadow-xl border border-blue-500/20">
-            <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5" />
-            
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl" />
-            
-            <div className="p-6 md:p-8 h-full flex flex-col">
-              <div className="flex-1">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                  <FaUsers className="text-3xl text-white" />
+      {/* Main content */}
+      <div className="relative z-10 container max-w-6xl mx-auto px-4 py-12">
+        <AnimatePresence mode="wait">
+          {activeSection === 'main' ? (
+            <motion.div 
+              key="main"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center"
+            >
+              {/* Hero Section */}
+              <motion.div 
+                className="text-center mb-16"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="relative inline-block mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 via-amber-400/20 to-amber-600/20 blur-xl rounded-full" />
+                  <motion.div 
+                    className="relative z-10 flex items-center justify-center w-24 h-24 mx-auto bg-gradient-to-br from-amber-500 to-amber-700 rounded-full shadow-lg mb-2"
+                    animate={{ 
+                      boxShadow: ['0 0 20px rgba(245, 158, 11, 0.3)', '0 0 30px rgba(245, 158, 11, 0.6)', '0 0 20px rgba(245, 158, 11, 0.3)']
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <FaTrophy className="text-4xl text-white" />
+                  </motion.div>
                 </div>
                 
-                <h3 className="text-2xl font-bold text-blue-200 mb-3">Multiplayer</h3>
-                <p className="text-blue-200/70 mb-6">
-                  Play with friends! Create a new game or join an existing one with a code.
+                <p className="text-xl text-white/70 max-w-2xl mx-auto mb-6">
+                  Play along with your favorite business reality show! Mark events as they happen and win with style.
                 </p>
                 
-                <div className="grid grid-cols-1 gap-4 mb-8">
-                  <motion.button
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl py-3 font-medium relative overflow-hidden group"
-                    onClick={handleCreateGame}
-                    whileTap={{ scale: 0.98 }}
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <motion.div 
+                    className="px-4 py-2 bg-amber-900/30 rounded-full text-amber-300 text-sm font-medium"
+                    whileHover={{ scale: 1.05 }}
                   >
-                    <span className="relative z-10 flex items-center justify-center">
-                      <GiDiceSixFacesFour className="text-xl mr-2" />
-                      Create New Game
-                    </span>
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-300/30 to-blue-400/0"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: "100%" }}
-                      transition={{ duration: 0.8 }}
-                    />
-                  </motion.button>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-blue-700/50" />
+                    <FaTv className="inline mr-1" /> Watch and Play
+                  </motion.div>
+                  <motion.div 
+                    className="px-4 py-2 bg-amber-900/30 rounded-full text-amber-300 text-sm font-medium"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <HiOutlineSparkles className="inline mr-1" /> Fun Facts
+                  </motion.div>
+                  <motion.div 
+                    className="px-4 py-2 bg-amber-900/30 rounded-full text-amber-300 text-sm font-medium"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <FaUsers className="inline mr-1" /> Multiplayer
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Game Mode Cards */}
+              <div className="flex flex-col gap-4 max-w-xl w-full mb-16">
+                {/* Quick Game Card */}
+                <motion.div
+                  className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-amber-700/20 to-amber-950/80 border border-amber-700/30 relative group"
+                  whileHover={{ 
+                    scale: 1.02,
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.3), 0 0 20px rgba(245, 158, 11, 0.4)" 
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                >
+                  <div className="absolute inset-0 opacity-40 bg-[url('/images/pattern.svg')]" />
+                  <div className="p-6 relative z-10 flex items-center">
+                    <div className="bg-gradient-to-br from-amber-500 to-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+                      <BsFillLightningChargeFill className="text-2xl text-white" />
                     </div>
-                    <div className="relative flex justify-center">
-                      <span className="px-2 text-xs uppercase text-blue-400 bg-blue-950">Or</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <Input
-                      placeholder="Enter game code"
-                      value={gameCode}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGameCode(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="bg-blue-900/50 border-blue-700/30 focus:border-blue-400 rounded-xl text-blue-100 h-12 placeholder:text-blue-400/60"
-                    />
                     
-                    <motion.button
-                      className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl py-3 font-medium relative overflow-hidden group disabled:opacity-50 disabled:pointer-events-none"
-                      onClick={handleJoinGame}
-                      disabled={!gameCode.trim()}
-                      whileTap={{ scale: 0.98 }}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">Quick Game</h3>
+                      <p className="text-white/70">
+                        Jump straight into a game with auto-selected team and advisor. Ready in seconds!
+                      </p>
+                    </div>
+                    
+                    <motion.button 
+                      className="ml-4 py-3 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 rounded-xl text-white font-medium flex items-center justify-center group-hover:shadow-lg transition-all whitespace-nowrap"
+                      onClick={handleQuickGameMode}
+                      whileTap={{ scale: 0.97 }}
                     >
-                      <span className="relative z-10 flex items-center justify-center">
-                        <FaUserFriends className="text-xl mr-2" />
-                        Join Existing Game
-                      </span>
-                      <motion.div 
-                        className="absolute inset-0 bg-gradient-to-r from-indigo-400/0 via-indigo-300/30 to-indigo-400/0"
-                        initial={{ x: "-100%" }}
-                        whileHover={{ x: "100%" }}
-                        transition={{ duration: 0.8 }}
-                      />
+                      Start
+                      <FiArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
                     </motion.button>
                   </div>
-                </div>
+                </motion.div>
+
+                {/* Single Player Card */}
+                <motion.div
+                  className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-blue-700/20 to-blue-950/80 border border-blue-700/30 relative group"
+                  whileHover={{ 
+                    scale: 1.02,
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.3), 0 0 20px rgba(59, 130, 246, 0.4)" 
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                >
+                  <div className="absolute inset-0 opacity-40 bg-[url('/images/pattern.svg')]" />
+                  <div className="p-6 relative z-10 flex items-center">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 w-14 h-14 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+                      <FaUserSecret className="text-2xl text-white" />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">Single Player</h3>
+                      <p className="text-white/70">
+                        Create your team and choose your advisor. Customize your experience fully.
+                      </p>
+                    </div>
+                    
+                    <motion.button 
+                      className="ml-4 py-3 px-6 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl text-white font-medium flex items-center justify-center group-hover:shadow-lg transition-all whitespace-nowrap"
+                      onClick={handleSinglePlayerMode}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Play Solo
+                      <FiArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+
+                {/* Multiplayer Card */}
+                <motion.div
+                  className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-purple-700/20 to-purple-950/80 border border-purple-700/30 relative group"
+                  whileHover={{ 
+                    scale: 1.02,
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.3), 0 0 20px rgba(147, 51, 234, 0.4)" 
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.4 }}
+                >
+                  <div className="absolute inset-0 opacity-40 bg-[url('/images/pattern.svg')]" />
+                  <div className="p-6 relative z-10 flex items-center">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 w-14 h-14 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+                      <FaUsers className="text-2xl text-white" />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">Multiplayer</h3>
+                      <p className="text-white/70">
+                        Play with friends! Create a game and invite others to join the competition.
+                      </p>
+                    </div>
+                    
+                    <div className="ml-4 flex gap-2">
+                      <motion.button 
+                        className="py-3 px-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl text-white font-medium flex items-center justify-center group-hover:shadow-lg transition-all whitespace-nowrap"
+                        onClick={handleCreateGame}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        Create
+                      </motion.button>
+                      <motion.button 
+                        className="py-3 px-4 bg-purple-700/30 hover:bg-purple-700/50 rounded-xl text-white font-medium flex items-center justify-center transition-all whitespace-nowrap"
+                        onClick={() => {
+                          playClick();
+                          setActiveSection('join');
+                        }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        Join
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-      
-      {/* Features Section */}
-      <motion.div 
-        className="max-w-4xl mx-auto mt-16 px-4"
-        variants={fadeIn}
-        custom={3}
-      >
-        <h2 className="text-2xl font-bold text-center text-white mb-10">Game Features</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: "🎮",
-              title: "Interactive Gameplay",
-              description: "Mark events as they happen in the show with our intuitive interface"
-            },
-            {
-              icon: "🏆",
-              title: "Win Animations",
-              description: "Experience exciting animations when you complete rows, columns, or a full house"
-            },
-            {
-              icon: "📱",
-              title: "Responsive Design",
-              description: "Play on any device - desktop, tablet, or mobile"
-            }
-          ].map((feature, i) => (
-            <motion.div 
-              key={i}
-              className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl p-6 border border-gray-700/30 backdrop-blur-sm"
-              whileHover={{ 
-                y: -5,
-                boxShadow: "0 20px 30px rgba(0, 0, 0, 0.2)",
-                borderColor: "rgba(255, 255, 255, 0.1)"
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            >
-              <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-              <p className="text-gray-400 text-sm">{feature.description}</p>
+              
+              {/* Footer */}
+              <motion.div 
+                className="text-center text-white/40 text-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                Created for fans of The Apprentice • All content belongs to their respective owners
+              </motion.div>
             </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </motion.div>
+          ) : (
+            <motion.div 
+              key="join"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-md mx-auto"
+            >
+              <div className="bg-gradient-to-br from-gray-900 to-black rounded-3xl p-8 border border-purple-700/20 shadow-2xl">
+                <button 
+                  onClick={() => {
+                    playClick();
+                    setActiveSection('main');
+                  }}
+                  className="text-white/60 hover:text-white mb-6 flex items-center text-sm"
+                >
+                  ← Back to main menu
+                </button>
+                
+                <h2 className="text-2xl font-bold text-white mb-6">Join a Game</h2>
+                
+                <div className="mb-6">
+                  <label className="block text-white/70 mb-2 text-sm">
+                    Enter Game Code
+                  </label>
+                  <Input
+                    value={gameCode}
+                    onChange={(e) => setGameCode(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="e.g. bingo-1234"
+                    className="w-full bg-gray-800/70 border-gray-700 text-white"
+                  />
+                </div>
+                
+                <Button
+                  onClick={handleJoinGame}
+                  disabled={!gameCode.trim()}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl text-white font-medium"
+                >
+                  Join Game
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 } 

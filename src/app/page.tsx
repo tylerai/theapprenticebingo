@@ -121,7 +121,7 @@ export default function Home() {
                   repeatType: "reverse"
                 }}
               >
-                Apprentice
+                The Apprentice <span className="text-sm">(UK)</span>
               </motion.span>
               <span className="text-white">Bingo</span>
             </motion.h1>
@@ -231,7 +231,7 @@ export default function Home() {
                   }
                 }}
               >
-                Apprentice
+                The Apprentice <span className="text-sm">(UK)</span>
               </motion.span>
               <span className="text-white">Bingo</span>
             </motion.h1>

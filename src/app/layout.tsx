@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Apprentice Bingo",
-  description: "A bingo game for apprentices",
+  title: "The Apprentice (UK) Bingo",
+  description: "A bingo game for The Apprentice UK TV show",
 };
 
 export default function RootLayout({
