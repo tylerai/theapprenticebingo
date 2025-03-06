@@ -29,11 +29,11 @@ export function AdvisorAnimation({
   
   // Map advisors to their GIFs and static images
   const ADVISOR_GIFS = {
-    'karen': ['/videos/karen-gif-1.webm', '/images/advisors/karen.png'],
-    'tim': ['/videos/tim-gif-1.webm', '/images/advisors/tim.png'],
-    'claude': ['/videos/claude-gif-1.webm', '/images/advisors/claude.png'],
-    'nick': ['/videos/nick-gif-1.webm', '/images/advisors/nick.png'],
-    'margaret': ['/images/advisors/margaret.png'],
+    'karen': ['/videos/karen-gif-1.webm', '/images/karenbrady.webp'],
+    'tim': ['/videos/tim-gif-1.webm', '/images/timcambell.webp'],
+    'claude': ['/videos/claude-gif-1.webm', '/images/claude.jpg'],
+    'nick': ['/videos/nick-gif-1.webm', '/images/nick.jpg'],
+    'margaret': ['/images/margaret.jpeg'],
   };
   
   // Lord Sugar GIFs for different game states
@@ -171,17 +171,17 @@ export function AdvisorAnimation({
     const currentAdvisor = advisor || variant;
     switch (currentAdvisor) {
       case 'karen':
-        return '/images/advisors/karen.png';
+        return '/images/karenbrady.webp';
       case 'tim':
-        return '/images/advisors/tim.png';
+        return '/images/timcambell.webp';
       case 'claude':
-        return '/images/advisors/claude.png';
+        return '/images/claude.jpg';
       case 'nick':
-        return '/images/advisors/nick.png';
+        return '/images/nick.jpg';
       case 'margaret':
-        return '/images/advisors/margaret.png';
+        return '/images/margaret.jpeg';
       default:
-        return '/images/advisors/karen.png';
+        return '/images/karenbrady.webp';
     }
   };
   

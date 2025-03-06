@@ -70,7 +70,37 @@ const bingoOptions = [
 ];
 
 // Function to get random options from the array
-function getRandomOptions(count) {
+function getRandomOptions(count, seed) {
+  // If seed is provided, use seeded random
+  if (seed) {
+    // Simple seeded random function
+    const seededRandom = (str) => {
+      let hash = Array.from(str).reduce((acc, char) => {
+        return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
+      }, 0);
+      
+      hash = Math.abs(hash);
+      
+      return function() {
+        hash ^= hash << 13;
+        hash ^= hash >> 17;
+        hash ^= hash << 5;
+        return Math.abs(hash) / Math.pow(2, 31);
+      };
+    };
+    
+    const random = seededRandom(seed);
+    
+    // Shuffle using Fisher-Yates with seeded random
+    const shuffled = [...bingoOptions];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    return shuffled.slice(0, count);
+  }
+  
   const shuffled = [...bingoOptions].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
@@ -475,42 +505,42 @@ export const useGameStore = create(
       },
 
       regenerateCard: (seed) => {
-        console.log("Regenerating card" + (seed ? " with seed: " + seed : ""));
-        // Generate new bingo options
-        const options = seed ? getRandomBingoOptions(9, seed) : getRandomBingoOptions(9);
-        const grid = [];
-        for (let i = 0; i < 3; i++) {
-          const row = [];
-          for (let j = 0; j < 3; j++) {
-            row.push(options[i * 3 + j]);
-          }
-          grid.push(row);
-        }
+        // Get options with seed if provided
+        const options = getRandomBingoOptions(9, seed);
+        const grid = [
+          [options[0], options[1], options[2]],
+          [options[3], options[4], options[5]],
+          [options[6], options[7], options[8]]
+        ];
         
-        // Reset game state with new grid
+        // Reset marks and set the new grid
         set({ 
           grid,
-          markedSquares: [], // Reset marked squares when card is regenerated
-          wins: [],          // Reset wins when card is regenerated
-          previousWins: [],  // Reset previous wins when card is regenerated
-          isLocked: false    // Unlock the game
+          markedSquares: [],
+          wins: [],
+          previousWins: []
         });
         
-        console.log("Card regenerated with new content");
+        // Update the team if in single player mode
+        const { teams, isSinglePlayer } = get();
         
-        // Force a refresh to show the new card
-        if (typeof window !== 'undefined') {
-          // Use a cleaner approach by just triggering a UI refresh
-          try {
-            window.history.pushState({}, '', window.location.pathname);
-            window.dispatchEvent(new Event('popstate'));
-            // Also dispatch a custom event that can be listened for
-            const regenerateEvent = new CustomEvent('card-regenerated');
-            window.dispatchEvent(regenerateEvent);
-          } catch (error) {
-            console.error("Error refreshing after card regeneration:", error);
-          }
+        if (isSinglePlayer && teams.length > 0) {
+          const updatedTeams = teams.map(team => ({
+            ...team,
+            markedSquares: [],
+            wins: []
+          }));
+          
+          set({ teams: updatedTeams });
         }
+        
+        // Trigger UI reset
+        setTimeout(() => {
+          const event = new CustomEvent('game-reset');
+          window.dispatchEvent(event);
+        }, 10);
+        
+        return seed; // Return the seed for display
       },
 
       // Functions that start the game modes
