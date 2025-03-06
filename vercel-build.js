@@ -76,7 +76,7 @@ function getRandomOptions(count) {
 }
 
 // Function to get random bingo options from a static list
-function getRandomBingoOptions(count) {
+function getRandomBingoOptions(count, seed) {
   const options = [
     "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
     "Candidate back-seat drives", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
@@ -88,7 +88,37 @@ function getRandomBingoOptions(count) {
     "Double firing!", "Triple firing!", "Project Manager changes"
   ];
   
-  // Shuffle and pick options
+  // If seed is provided, use seeded random
+  if (seed) {
+    // Simple seeded random function
+    const seededRandom = (str) => {
+      let hash = Array.from(str).reduce((acc, char) => {
+        return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
+      }, 0);
+      
+      hash = Math.abs(hash);
+      
+      return function() {
+        hash ^= hash << 13;
+        hash ^= hash >> 17;
+        hash ^= hash << 5;
+        return Math.abs(hash) / Math.pow(2, 31);
+      };
+    };
+    
+    const random = seededRandom(seed);
+    
+    // Shuffle using Fisher-Yates with seeded random
+    const shuffled = [...options];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    return shuffled.slice(0, count);
+  }
+  
+  // Otherwise use regular shuffle
   const shuffled = [...options].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
@@ -447,7 +477,7 @@ export const useGameStore = create(
       regenerateCard: (seed) => {
         console.log("Regenerating card" + (seed ? " with seed: " + seed : ""));
         // Generate new bingo options
-        const options = seed ? getRandomBingoOptions(9) : getRandomBingoOptions(9);
+        const options = seed ? getRandomBingoOptions(9, seed) : getRandomBingoOptions(9);
         const grid = [];
         for (let i = 0; i < 3; i++) {
           const row = [];

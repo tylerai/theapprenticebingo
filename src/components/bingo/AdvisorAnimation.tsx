@@ -11,6 +11,8 @@ interface AdvisorAnimationProps {
   size?: 'small' | 'medium' | 'large';
   className?: string;
   forceVideo?: boolean;
+  advisor?: string;
+  animate?: boolean;
 }
 
 export function AdvisorAnimation({ 
@@ -18,18 +20,20 @@ export function AdvisorAnimation({
   variant = '0', 
   className = '',
   size = 'medium',
-  forceVideo = false
+  forceVideo = false,
+  advisor,
+  animate = true
 }: AdvisorAnimationProps) {
   const { teamAdvisor, wins, markedSquares } = useGameStore();
   const [currentGif, setCurrentGif] = React.useState<string>('');
   
-  // Map advisors to their GIFs
+  // Map advisors to their GIFs and static images
   const ADVISOR_GIFS = {
-    'karen': ['/videos/karen-gif-1.webm', '/images/karenbrady.webp'],
-    'tim': ['/videos/tim-gif-1.webm', '/images/timcambell.webp'],
-    'claude': ['/videos/claude-gif-1.webm', '/images/claude.jpg'],
-    'nick': ['/videos/nick-gif-1.webm', '/images/nick.jpg'],
-    'margaret': ['/images/margaret.jpeg'],
+    'karen': ['/videos/karen-gif-1.webm', '/images/advisors/karen.png'],
+    'tim': ['/videos/tim-gif-1.webm', '/images/advisors/tim.png'],
+    'claude': ['/videos/claude-gif-1.webm', '/images/advisors/claude.png'],
+    'nick': ['/videos/nick-gif-1.webm', '/images/advisors/nick.png'],
+    'margaret': ['/images/advisors/margaret.png'],
   };
   
   // Lord Sugar GIFs for different game states
@@ -105,6 +109,17 @@ export function AdvisorAnimation({
   
   // Determine which GIF to show
   const getGifSource = (): string => {
+    // If direct advisor prop is provided, use it first
+    if (type === 'advisor' && advisor) {
+      if (ADVISOR_GIFS[advisor as keyof typeof ADVISOR_GIFS]) {
+        // Get the specific GIF for the advisor based on direct advisor prop
+        const advisorGifs = ADVISOR_GIFS[advisor as keyof typeof ADVISOR_GIFS];
+        // Use WebM if available, otherwise fallback to static image
+        return advisorGifs[0] || advisorGifs[1] || '/images/alansugar.jpg';
+      }
+    }
+    
+    // Otherwise proceed with variant logic
     if (type === 'advisor') {
       if (variant && ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]) {
         // Get the specific GIF for the advisor based on variant
@@ -132,6 +147,44 @@ export function AdvisorAnimation({
     }
   };
   
+  // Function to get advisor name (for legacy compatibility)
+  const getAdvisorName = () => {
+    const currentAdvisor = advisor || variant;
+    switch (currentAdvisor) {
+      case 'karen':
+        return 'Karen Brady';
+      case 'tim':
+        return 'Tim Campbell';
+      case 'claude':
+        return 'Claude Littner';
+      case 'nick':
+        return 'Nick Hewer';
+      case 'margaret':
+        return 'Margaret Mountford';
+      default:
+        return 'Karen Brady';
+    }
+  };
+  
+  // Function to get advisor image (for legacy compatibility)
+  const getAdvisorImage = () => {
+    const currentAdvisor = advisor || variant;
+    switch (currentAdvisor) {
+      case 'karen':
+        return '/images/advisors/karen.png';
+      case 'tim':
+        return '/images/advisors/tim.png';
+      case 'claude':
+        return '/images/advisors/claude.png';
+      case 'nick':
+        return '/images/advisors/nick.png';
+      case 'margaret':
+        return '/images/advisors/margaret.png';
+      default:
+        return '/images/advisors/karen.png';
+    }
+  };
+  
   // Determine dimensions based on size
   const getDimensions = () => {
     switch (size) {
@@ -151,7 +204,8 @@ export function AdvisorAnimation({
   const handleError = () => {
     // If image fails to load, try using a static fallback
     if (type === 'advisor') {
-      const staticImage = ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg';
+      const currentAdvisor = advisor || variant;
+      const staticImage = ADVISOR_GIFS[currentAdvisor as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg';
       setImgSrc(staticImage);
     } else {
       setImgSrc('/images/alansugar.jpg');
@@ -160,8 +214,41 @@ export function AdvisorAnimation({
   
   React.useEffect(() => {
     setImgSrc(getGifSource());
-  }, [variant, type, currentGif]);
+  }, [variant, type, currentGif, advisor]);
   
+  // Simple advisor rendering for compatibility with vercel-build.js implementation
+  if (advisor && type === 'advisor') {
+    return (
+      <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
+        <motion.div
+          initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
+          animate={animate ? { 
+            scale: [0.9, 1, 0.9],
+            y: [10, 0, 10]
+          } : { scale: 1 }}
+          transition={{ 
+            duration: 3,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          className="relative w-full h-full flex items-center justify-center"
+        >
+          <div className="overflow-hidden rounded-full w-full h-full relative">
+            <Image
+              src={getAdvisorImage()}
+              alt={`Advisor ${getAdvisorName()}`}
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority
+            />
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+  
+  // Original component rendering
   return (
     <motion.div
       className={`relative overflow-hidden ${className}`}
@@ -200,7 +287,9 @@ export function AdvisorAnimation({
           >
             <source src={imgSrc} type="video/webm" />
             <Image
-              src={type === 'advisor' ? ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg' : '/images/alansugar.jpg'}
+              src={type === 'advisor' ? 
+                (advisor ? getAdvisorImage() : ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg') : 
+                '/images/alansugar.jpg'}
               alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${variant}`}
               width={width}
               height={height}
@@ -210,7 +299,7 @@ export function AdvisorAnimation({
         ) : (
           <Image
             src={imgSrc}
-            alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${variant}`}
+            alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
             width={width}
             height={height}
             style={{ 

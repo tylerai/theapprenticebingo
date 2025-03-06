@@ -27,7 +27,9 @@ export function GameControls() {
 
   const exitGame = () => {
     playClick();
-    window.location.reload();
+    // Use resetGame instead of just reloading the page
+    resetGame();
+    // This will properly reset the game and redirect to home
   };
 
   const handleResetMarks = () => {
@@ -72,10 +74,10 @@ export function GameControls() {
             <Button 
               variant="outline" 
               onClick={handleResetMarks}
-              className="w-full bg-amber-600/90 hover:bg-amber-700 text-white border-amber-700/50 flex items-center gap-2 text-xs sm:text-sm"
+              className="w-full bg-amber-600/90 hover:bg-amber-700 text-white border-amber-700/50 flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
             >
               <FiRefreshCw className="text-amber-200" />
-              Reset Marks
+              <span>Reset Marks</span>
             </Button>
           </motion.div>
 
@@ -84,10 +86,10 @@ export function GameControls() {
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button 
                 onClick={handleNewCard}
-                className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2 text-xs sm:text-sm"
+                className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
               >
                 <FiGrid className="text-green-200" />
-                New Card
+                <span>New Card</span>
               </Button>
             </motion.div>
           )}
@@ -109,7 +111,7 @@ export function GameControls() {
               <Button
                 onClick={handleLoadSeed}
                 variant="secondary"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium"
                 disabled={!seedInput.trim()}
               >
                 Load
@@ -124,10 +126,10 @@ export function GameControls() {
           <Button 
             variant="destructive" 
             onClick={exitGame}
-            className="w-full flex items-center gap-2 text-xs sm:text-sm"
+            className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
           >
             <FiPower />
-            Exit Game
+            <span>Exit Game</span>
           </Button>
         </motion.div>
       </CardContent>

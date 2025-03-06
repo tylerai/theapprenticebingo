@@ -98,12 +98,14 @@
 │   │   ├── store
 │   │   │   ├── __tests__
 │   │   │   │   └── game-store.test.ts
-│   │   │   └── game-store.ts
+│   │   │   ├── game-store.ts
+│   │   │   └── index.ts
 │   │   ├── types
 │   │   │   └── index.ts
 │   │   ├── animations.ts
 │   │   ├── data.ts
 │   │   ├── facts.ts
+│   │   ├── index.ts
 │   │   ├── sounds.ts
 │   │   ├── types.ts
 │   │   ├── utils.test.js
@@ -120,9 +122,11 @@
 ├── deploy.sh
 ├── deployment.md
 ├── fix-tests.sh
+├── generate-qr.js
 ├── guide.md
 ├── jest.config.js
 ├── jest.setup.js
+├── jsconfig.json
 ├── multiplayer.test.js
 ├── next-env.d.ts
 ├── next.config.js
@@ -132,7 +136,10 @@
 ├── simple.test.js
 ├── tailwind.config.js
 ├── tsconfig.json
-└── utils.test.js
+├── tsconfig.server.json
+├── utils.test.js
+├── vercel-build.js
+└── vercel.json
 
-23 directories, 109 files
+23 directories, 116 files
 ```

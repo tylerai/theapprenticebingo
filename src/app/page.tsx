@@ -336,7 +336,7 @@ export default function Home() {
                         >
                           <AdvisorAnimation
                             type="advisor"
-                            variant={teamAdvisor}
+                            advisor={teamAdvisor}
                             className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-amber-700/30 shadow-lg"
                           />
                         </motion.div>
