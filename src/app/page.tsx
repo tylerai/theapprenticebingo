@@ -14,9 +14,30 @@ import { ApprenticeFacts } from "@/components/bingo/ApprenticeFacts";
 import { useSounds } from "@/lib/sounds";
 import { fadeIn, slideInFromBottom, slideInFromLeft, slideInFromRight, staggerChildren, boardroomBackground } from "@/lib/animations";
 import { AdvisorAnimation } from "@/components/bingo/AdvisorAnimation";
+import { WinsList } from "@/components/bingo/WinsList";
+
+// Helper function to format advisor name for display
+function formatAdvisor(advisor: 'karen' | 'tim' | 'claude' | 'nick' | 'margaret' | null): string {
+  if (!advisor) return 'None';
+  
+  const nameMap: Record<string, string> = {
+    'karen': 'Karen Brady',
+    'tim': 'Tim Campbell',
+    'claude': 'Claude Littner',
+    'nick': 'Nick Hewer',
+    'margaret': 'Margaret Mountford'
+  };
+  
+  return nameMap[advisor] || advisor;
+}
 
 // Component for the parallax background effect
-function ParallaxBackground({ children, src, opacity = 0.6 }: { children: React.ReactNode, src: string, opacity?: number }) {
+function ParallaxBackground({ children, src, opacity = 0.6, overlay = true }: { 
+  children: React.ReactNode, 
+  src: string, 
+  opacity?: number,
+  overlay?: boolean
+}) {
   const [offset, setOffset] = React.useState(0);
   
   React.useEffect(() => {
@@ -43,6 +64,7 @@ function ParallaxBackground({ children, src, opacity = 0.6 }: { children: React.
           style={{ opacity }}
         />
       </div>
+      {overlay && <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>}
       <div className="relative z-10">
         {children}
       </div>
@@ -57,6 +79,9 @@ export default function Home() {
   const isSinglePlayer = useGameStore(state => state.isSinglePlayer);
   const teamName = useGameStore(state => state.teamName);
   const teamAdvisor = useGameStore(state => state.teamAdvisor);
+  const teams = useGameStore(state => state.teams);
+  // Get the current team from the teams array
+  const currentTeam = teams.find(team => team.id === teamId);
   // Access soloSetupMode using type assertion to avoid TypeScript error
   const soloSetupMode = useGameStore(state => (state as any).soloSetupMode);
   const { playClick } = useSounds();
@@ -184,21 +209,26 @@ export default function Home() {
         variants={staggerChildren}
         key="main-game"
       >
-        <ParallaxBackground src="/images/skylinebackground.jpg" opacity={0.4}>
-          <div className="h-56 flex items-center justify-center bg-black/40">
+        <ParallaxBackground src="/images/alansugar.jpg" opacity={0.7} overlay={true}>
+          <div className="h-56 flex items-center justify-center">
             <motion.h1 
               className="text-4xl md:text-5xl font-bold text-center drop-shadow-lg"
               variants={slideInFromBottom}
             >
               <motion.span 
                 className="block text-amber-400"
+                initial={{ opacity: 0 }}
                 animate={{ 
+                  opacity: 1,
                   textShadow: ['0 0 8px rgba(245, 158, 11, 0)', '0 0 20px rgba(245, 158, 11, 0.5)', '0 0 8px rgba(245, 158, 11, 0)'],
                 }}
                 transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  repeatType: "reverse"
+                  opacity: { duration: 1.5, ease: "easeInOut" },
+                  textShadow: { 
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }
                 }}
               >
                 Apprentice
@@ -235,6 +265,7 @@ export default function Home() {
                       type="lord-sugar"
                       size="large"
                       className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
+                      forceVideo={true}
                     />
                   </motion.div>
                 </motion.div>
@@ -298,128 +329,34 @@ export default function Home() {
                       <div className="flex justify-center">
                         <motion.div
                           whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                            scale: 1.05,
+                            boxShadow: "0 0 15px rgba(245, 158, 11, 0.3)"
                           }}
-                          onClick={() => playClick()}
-                          custom={0}
-                          variants={fadeIn}
-                          className="flex flex-col items-center"
+                          transition={{ type: "spring", stiffness: 300, damping: 15 }}
                         >
                           <AdvisorAnimation
                             type="advisor"
                             variant={teamAdvisor}
-                            size="medium"
-                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
+                            className="h-32 w-32 rounded-full border-2 border-amber-700/30 shadow-lg"
                           />
-                          <span className="text-sm text-gray-300 mt-2 font-medium capitalize">{teamAdvisor}</span>
                         </motion.div>
                       </div>
-                    </motion.div>
-                  )}
-                  
-                  {!showMainGame && (
-                    <motion.div 
-                      className="mt-6"
-                      variants={staggerChildren}
-                    >
-                      <h3 className="text-center text-white text-sm mb-3">Available Advisors</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                      <motion.p className="mt-2 text-center font-medium text-amber-400">
+                        {formatAdvisor(teamAdvisor)}
+                      </motion.p>
+                      
+                      {/* Player Wins Display with expandable list */}
+                      {currentTeam && currentTeam.wins.length > 0 && (
                         <motion.div
-                          whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
-                          }}
-                          onClick={() => playClick()}
-                          custom={0}
-                          variants={fadeIn}
-                          className="flex flex-col items-center"
+                          className="mt-6"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
                         >
-                          <AdvisorAnimation
-                            type="advisor"
-                            variant="karen"
-                            size="small"
-                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-300 mt-1">Karen</span>
+                          <h3 className="text-amber-400 font-medium mb-3">Your Achievements</h3>
+                          <WinsList wins={currentTeam.wins} />
                         </motion.div>
-                        
-                        <motion.div
-                          whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
-                          }}
-                          onClick={() => playClick()}
-                          custom={1}
-                          variants={fadeIn}
-                          className="flex flex-col items-center"
-                        >
-                          <AdvisorAnimation
-                            type="advisor"
-                            variant="tim"
-                            size="small"
-                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-300 mt-1">Tim</span>
-                        </motion.div>
-                        
-                        <motion.div
-                          whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
-                          }}
-                          onClick={() => playClick()}
-                          custom={2}
-                          variants={fadeIn}
-                          className="flex flex-col items-center"
-                        >
-                          <AdvisorAnimation
-                            type="advisor"
-                            variant="claude"
-                            size="small"
-                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-300 mt-1">Claude</span>
-                        </motion.div>
-                        
-                        <motion.div
-                          whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
-                          }}
-                          onClick={() => playClick()}
-                          custom={3}
-                          variants={fadeIn}
-                          className="flex flex-col items-center"
-                        >
-                          <AdvisorAnimation
-                            type="advisor"
-                            variant="nick"
-                            size="small"
-                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-300 mt-1">Nick</span>
-                        </motion.div>
-                        
-                        <motion.div
-                          whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
-                          }}
-                          onClick={() => playClick()}
-                          custom={4}
-                          variants={fadeIn}
-                          className="flex flex-col items-center"
-                        >
-                          <AdvisorAnimation
-                            type="advisor"
-                            variant="margaret"
-                            size="small"
-                            className="rounded-full shadow-lg border-2 border-amber-700/20 cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-300 mt-1">Margaret</span>
-                        </motion.div>
-                      </div>
+                      )}
                     </motion.div>
                   )}
                   

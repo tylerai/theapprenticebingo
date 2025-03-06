@@ -4,6 +4,7 @@ import * as React from "react";
 import { useGameStore } from "@/lib/store/game-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { Team, Win } from "@/lib/types";
+import { WinsList } from './WinsList';
 
 function getTeamProgress(team: Team, gameMode: string, targetNumber: number): number {
   if (gameMode === 'line') {
@@ -200,24 +201,7 @@ export function Leaderboard() {
 
                   {/* Recent wins */}
                   {team.wins.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {team.wins.slice(0, 2).map((win, idx) => (
-                        <span 
-                          key={idx} 
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium inline-block shadow-sm
-                            ${win.type === 'full_house' 
-                              ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30' 
-                              : 'bg-gray-900 text-gray-300 border border-gray-700'}`}
-                        >
-                          {formatWinMessage(win)}
-                        </span>
-                      ))}
-                      {team.wins.length > 2 && (
-                        <span className="px-2.5 py-1 bg-gray-900 rounded-full text-xs font-medium inline-block border border-gray-700 text-gray-300">
-                          +{team.wins.length - 2} more
-                        </span>
-                      )}
-                    </div>
+                    <WinsList wins={team.wins} className="mt-3" />
                   )}
                 </div>
               );

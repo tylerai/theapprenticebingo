@@ -20,13 +20,38 @@ export function BingoSquare({ index, content, isSelected, isLocked, isWinning = 
   const row = Math.floor(index / 3);
   const col = index % 3;
   const { playClick } = useSounds();
+  const [isClicked, setIsClicked] = React.useState(false);
+  const [hasInitialized, setHasInitialized] = React.useState(false);
+
+  // Initialize local state from props
+  React.useEffect(() => {
+    setIsClicked(isSelected);
+    setHasInitialized(true);
+    console.log(`BingoSquare ${row},${col} initialized with isSelected=${isSelected}`);
+  }, [isSelected, row, col]);
 
   const handleClick = React.useCallback(() => {
-    if (!isLocked) {
-      playClick();
+    if (isLocked) return;
+    
+    console.log(`BingoSquare ${row},${col} clicked, current state: isSelected=${isSelected}, isClicked=${isClicked}`);
+    
+    // Play sound effect
+    playClick();
+    
+    // Set local state immediately for responsive UI
+    setIsClicked(prev => !prev);
+    
+    // Update global state
+    try {
       toggleSquare(row, col);
+      console.log(`BingoSquare ${row},${col} toggled successfully`);
+    } catch (error) {
+      console.error(`Error toggling square ${row},${col}:`, error);
     }
-  }, [isLocked, toggleSquare, row, col, playClick]);
+  }, [isLocked, toggleSquare, row, col, playClick, isSelected, isClicked]);
+
+  // Determine if the square should appear selected
+  const isActive = isSelected || isClicked;
 
   return (
     <motion.button
@@ -51,12 +76,15 @@ export function BingoSquare({ index, content, isSelected, isLocked, isWinning = 
         "relative w-full aspect-square px-2 py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-200",
         "flex items-center justify-center",
         "shadow-md bg-opacity-90 backdrop-blur-sm",
-        isSelected 
+        isActive
           ? "bg-gradient-to-br from-amber-300 to-amber-500 text-black" 
           : "bg-gradient-to-br from-gray-700 to-gray-900 text-white hover:from-gray-600 hover:to-gray-800",
         isLocked && "cursor-not-allowed opacity-70",
         isWinning && "z-10"
       )}
+      data-selected={isActive}
+      data-testid={`bingo-square-${row}-${col}`}
+      data-initialized={hasInitialized}
     >
       {/* Content */}
       <div className="text-center px-1 flex-1 flex items-center justify-center min-h-[5rem] text-sm sm:text-base">
@@ -64,7 +92,7 @@ export function BingoSquare({ index, content, isSelected, isLocked, isWinning = 
       </div>
       
       {/* Checkmark overlay */}
-      {isSelected && (
+      {isActive && (
         <motion.div 
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}

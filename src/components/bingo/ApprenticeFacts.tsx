@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { apprenticeFacts } from '@/lib/facts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTypewriter, Cursor } from 'react-simple-typewriter';
 import { useSounds } from '@/lib/sounds';
 import { Button } from '@/components/ui/button';
 import { fadeIn, slideInFromBottom, pulseAnimation, shimmer } from '@/lib/animations';
@@ -16,15 +15,6 @@ export function ApprenticeFacts() {
   const [showControls, setShowControls] = React.useState(false);
   const { playClick, playNotification } = useSounds();
   
-  // Use the typing effect for facts
-  const [text] = useTypewriter({
-    words: [apprenticeFacts[factIndex]],
-    loop: 1,
-    typeSpeed: 40,
-    deleteSpeed: 0,
-    delaySpeed: 0,
-  });
-
   // Generate a random fact that hasn't been shown recently
   const getRandomFact = React.useCallback(() => {
     const recentFacts = factHistory.slice(-5); // Keep track of the last 5 facts
@@ -158,8 +148,7 @@ export function ApprenticeFacts() {
           >
             <div className="text-3xl text-amber-500 opacity-70">"</div>
             <p className="text-gray-200 italic leading-relaxed min-h-[4rem]">
-              {text}
-              <Cursor cursorColor="rgba(245, 158, 11, 0.5)" />
+              {apprenticeFacts[factIndex]}
             </p>
             <div className="text-3xl text-amber-500 opacity-70 self-end">"</div>
           </motion.div>

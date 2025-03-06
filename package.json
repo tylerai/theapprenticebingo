@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:js": "jest --testMatch=\"**/*.test.js\"",
+    "test:nocheck": "jest --no-cache --testPathIgnorePatterns=\"\" --passWithNoTests"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",

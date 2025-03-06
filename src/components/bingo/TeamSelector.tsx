@@ -6,10 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { Team } from "@/lib/types";
 import { TeamNameCloud } from "@/components/bingo/TeamNameCloud";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+// Advisor data with consistent image paths and display names
+const ADVISORS = [
+  { id: 'karen', name: 'Karen Brady', path: '/images/karenbrady.webp' },
+  { id: 'tim', name: 'Tim Campbell', path: '/images/timcambell.webp' },
+  { id: 'claude', name: 'Claude Littner', path: '/images/claude.jpg' },
+  { id: 'nick', name: 'Nick Hewer', path: '/images/nick.jpg' },
+  { id: 'margaret', name: 'Margaret Mountford', path: '/images/margaret.jpeg' },
+] as const;
+
+type AdvisorId = typeof ADVISORS[number]['id'];
 
 export function TeamSelector() {
   const [teamName, setTeamName] = React.useState("");
-  const [advisor, setAdvisor] = React.useState<'karen' | 'tim' | 'claude' | 'nick' | 'margaret'>('karen');
+  const [advisor, setAdvisor] = React.useState<AdvisorId>('karen');
   const gameId = useGameStore(state => state.gameId);
   const teams = useGameStore(state => state.teams);
   const isHost = useGameStore(state => state.isHost);
@@ -93,61 +107,72 @@ export function TeamSelector() {
           <div className="space-y-2">
             <label className="text-sm font-medium">Choose Your Advisor</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <Button
-                variant={advisor === 'karen' ? 'default' : 'outline'}
-                onClick={() => setAdvisor('karen')}
-                className={advisor === 'karen' ? 'bg-amber-600 hover:bg-amber-700' : ''}
-              >
-                Karen Brady
-              </Button>
-              <Button
-                variant={advisor === 'tim' ? 'default' : 'outline'}
-                onClick={() => setAdvisor('tim')}
-                className={advisor === 'tim' ? 'bg-amber-600 hover:bg-amber-700' : ''}
-              >
-                Tim Campbell
-              </Button>
-              <Button
-                variant={advisor === 'claude' ? 'default' : 'outline'}
-                onClick={() => setAdvisor('claude')}
-                className={advisor === 'claude' ? 'bg-amber-600 hover:bg-amber-700' : ''}
-              >
-                Claude
-              </Button>
-              <Button
-                variant={advisor === 'nick' ? 'default' : 'outline'}
-                onClick={() => setAdvisor('nick')}
-                className={advisor === 'nick' ? 'bg-amber-600 hover:bg-amber-700' : ''}
-              >
-                Nick
-              </Button>
-              <Button
-                variant={advisor === 'margaret' ? 'default' : 'outline'}
-                onClick={() => setAdvisor('margaret')}
-                className={advisor === 'margaret' ? 'bg-amber-600 hover:bg-amber-700' : ''}
-              >
-                Margaret
-              </Button>
+              {ADVISORS.map((advisorData) => (
+                <motion.div
+                  key={advisorData.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setAdvisor(advisorData.id)}
+                  className={cn(
+                    "relative cursor-pointer overflow-hidden rounded-lg border-2 transition-all duration-200",
+                    advisor === advisorData.id 
+                      ? "border-amber-500 shadow-glow-amber" 
+                      : "border-gray-700 hover:border-gray-500"
+                  )}
+                >
+                  {/* Standardized image container with fixed aspect ratio */}
+                  <div className="relative aspect-[3/4] w-full">
+                    {/* Background image with blur for consistency */}
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-sm opacity-40 scale-110"
+                      style={{ backgroundImage: `url(${advisorData.path})` }}
+                    />
+                    
+                    {/* Overlay gradient for consistency */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-gray-900/20 z-10" />
+                    
+                    {/* Main image */}
+                    <div className="absolute inset-0 flex items-center justify-center z-0">
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={advisorData.path}
+                          alt={advisorData.name}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className="object-cover object-center"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Name overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-gray-900 to-transparent z-20">
+                      <p className="text-center text-white font-medium text-sm">
+                        {advisorData.name}
+                      </p>
+                    </div>
+                    
+                    {/* Selected indicator */}
+                    {advisor === advisorData.id && (
+                      <div className="absolute top-2 right-2 z-30 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-black" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-
-          <div className="flex flex-col gap-2 pt-4">
-            <Button 
-              onClick={handleCreateTeam} 
+          
+          <div className="pt-4">
+            <Button
+              onClick={handleCreateTeam}
               disabled={!teamName.trim()}
-              className="bg-amber-600 hover:bg-amber-700"
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
             >
-              {soloSetupMode ? "Start Solo Game" : 
-               isHost ? "Start Game" : "Join Game"}
+              {soloSetupMode ? 'Start Game' : 'Create Team'}
             </Button>
-            {!soloSetupMode && !isSinglePlayer && (
-              <Button 
-                onClick={handleSinglePlayer}
-                variant="outline"
-              >
-                Play Solo
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>

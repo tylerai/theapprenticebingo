@@ -11,9 +11,15 @@ const config = {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: 'tsconfig.json',
     }],
+    '^.+\\.(js|jsx)$': ['babel-jest'],
   },
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.test.(ts|tsx)',
+    '<rootDir>/**/*.test.js'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.next/'
   ],
 };
 

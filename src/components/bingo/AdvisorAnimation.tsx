@@ -10,13 +10,15 @@ interface AdvisorAnimationProps {
   variant?: string; 
   size?: 'small' | 'medium' | 'large';
   className?: string;
+  forceVideo?: boolean;
 }
 
 export function AdvisorAnimation({ 
   type, 
   variant = '0', 
   className = '',
-  size = 'medium'
+  size = 'medium',
+  forceVideo = false
 }: AdvisorAnimationProps) {
   const { teamAdvisor, wins, markedSquares } = useGameStore();
   const [currentGif, setCurrentGif] = React.useState<string>('');
@@ -24,7 +26,7 @@ export function AdvisorAnimation({
   // Map advisors to their GIFs
   const ADVISOR_GIFS = {
     'karen': ['/videos/karen-gif-1.webm', '/images/karenbrady.webp'],
-    'tim': ['/images/tim-2.webp', '/images/timcambell.webp'],
+    'tim': ['/videos/tim-gif-1.webm', '/images/timcambell.webp'],
     'claude': ['/videos/claude-gif-1.webm', '/images/claude.jpg'],
     'nick': ['/videos/nick-gif-1.webm', '/images/nick.jpg'],
     'margaret': ['/images/margaret.jpeg'],
@@ -33,6 +35,15 @@ export function AdvisorAnimation({
   // Lord Sugar GIFs for different game states
   const LORD_SUGAR_GIFS = [
     '/images/alansugar.jpg',
+    '/videos/alan-sugar-gif-1.webm',
+    '/videos/alan-sugar-gif-2.webm',
+    '/videos/alan-sugar-gif-3.webm',
+    '/videos/alan-sugar-gif-4.webm',
+    '/videos/alan-sugar-gif-5.webm',
+  ];
+  
+  // Lord Sugar Videos only (for forceVideo parameter)
+  const LORD_SUGAR_VIDEOS = [
     '/videos/alan-sugar-gif-1.webm',
     '/videos/alan-sugar-gif-2.webm',
     '/videos/alan-sugar-gif-3.webm',
@@ -105,6 +116,12 @@ export function AdvisorAnimation({
       return '/images/alansugar.jpg';
     } else {
       // For Lord Sugar, use the current GIF state or cycle based on marked squares
+      if (forceVideo) {
+        // If forceVideo is true, only use videos
+        const videoIndex = markedSquares.length % LORD_SUGAR_VIDEOS.length;
+        return LORD_SUGAR_VIDEOS[videoIndex];
+      }
+      
       if (currentGif) {
         return currentGif;
       }
@@ -147,46 +164,70 @@ export function AdvisorAnimation({
   
   return (
     <motion.div
-      className={className}
+      className={`relative overflow-hidden ${className}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {imgSrc.endsWith('.webm') ? (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          width={width}
-          height={height}
-          style={{ 
-            objectFit: "cover", 
-            borderRadius: size === 'small' ? '50%' : '8px',
-            width,
-            height 
-          }}
-          onError={handleError}
-        >
-          <source src={imgSrc} type="video/webm" />
+      {/* Background blur for consistency */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center blur-sm opacity-40 scale-110 z-0"
+        style={{ backgroundImage: `url(${imgSrc})` }}
+      />
+      
+      {/* Overlay gradient for consistency */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-gray-900/20 z-10" />
+      
+      {/* Main content */}
+      <div className="relative z-0">
+        {imgSrc.endsWith('.webm') ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            width={width}
+            height={height}
+            style={{ 
+              objectFit: "cover", 
+              borderRadius: type === 'advisor' ? '50%' : '8px',
+              width,
+              height,
+              position: 'relative',
+              zIndex: 5
+            }}
+            onError={handleError}
+          >
+            <source src={imgSrc} type="video/webm" />
+            <Image
+              src={type === 'advisor' ? ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg' : '/images/alansugar.jpg'}
+              alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${variant}`}
+              width={width}
+              height={height}
+              style={{ objectFit: "cover", borderRadius: type === 'advisor' ? '50%' : '8px' }}
+            />
+          </video>
+        ) : (
           <Image
-            src={type === 'advisor' ? ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg' : '/images/alansugar.jpg'}
+            src={imgSrc}
             alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${variant}`}
             width={width}
             height={height}
-            style={{ objectFit: "cover", borderRadius: size === 'small' ? '50%' : '8px' }}
+            style={{ 
+              objectFit: "cover", 
+              borderRadius: type === 'advisor' ? '50%' : '8px',
+              position: 'relative',
+              zIndex: 5
+            }}
+            onError={handleError}
           />
-        </video>
-      ) : (
-        <Image
-          src={imgSrc}
-          alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${variant}`}
-          width={width}
-          height={height}
-          style={{ objectFit: "cover", borderRadius: size === 'small' ? '50%' : '8px' }}
-          onError={handleError}
-        />
-      )}
+        )}
+      </div>
+      
+      {/* Subtle shine effect */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent z-20 pointer-events-none"
+      />
     </motion.div>
   );
 } 

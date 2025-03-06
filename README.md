@@ -4,7 +4,7 @@ A fun, interactive game based on The Apprentice TV show. Play along while watchi
 
 ## Features
 
-- 5x5 bingo card with randomized events from The Apprentice
+- 3x3 bingo card with randomized events from The Apprentice
 - Interactive animations with Lord Sugar and his advisors
 - Fun facts about the show
 - Win animations and sound effects
@@ -49,13 +49,30 @@ yarn dev
 
 ## Testing
 
-Run the test suite with:
+The application includes a comprehensive test suite using Jest and React Testing Library.
+
+### Running Tests
 
 ```bash
+# Run all tests
 npm test
-# or
-yarn test
+
+# Run tests in watch mode (for development)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
 ```
+
+### Test Structure
+
+Tests are organized in `__tests__` directories alongside the components or modules they test:
+
+- Component tests: `src/components/bingo/__tests__/`
+- Store tests: `src/lib/store/__tests__/`
+- Page tests: `src/app/__tests__/`
+
+For more detailed information about testing, see [TESTING.md](TESTING.md).
 
 ## Game Rules
 

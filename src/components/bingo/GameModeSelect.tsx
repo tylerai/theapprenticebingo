@@ -12,6 +12,7 @@ import { GiPartyPopper, GiDiceSixFacesFour } from "react-icons/gi";
 import { FaUsers, FaUserFriends, FaClipboard, FaUserSecret } from "react-icons/fa";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { HiOutlineLightningBolt } from "react-icons/hi";
+import { BsFillLightningChargeFill } from "react-icons/bs";
 import Image from "next/image";
 
 export function GameModeSelect() {
@@ -19,6 +20,7 @@ export function GameModeSelect() {
   const [createdGameCode, setCreatedGameCode] = React.useState("");
   const [showCopiedMessage, setShowCopiedMessage] = React.useState(false);
   const initSinglePlayerMode = useGameStore(state => state.initSinglePlayerMode);
+  const initQuickGameMode = useGameStore(state => state.initQuickGameMode);
   const prepareSoloMode = useGameStore(state => state.prepareSoloMode);
   const initGame = useGameStore(state => state.initGame);
   const { playClick, playSuccess } = useSounds();
@@ -56,6 +58,12 @@ export function GameModeSelect() {
     // Use prepareSoloMode instead of directly initializing the solo game
     // This will show the team name and advisor selection screen
     prepareSoloMode();
+  };
+
+  const handleQuickGameMode = () => {
+    playClick();
+    // Start a quick game with auto-selected team name and advisor
+    initQuickGameMode();
   };
 
   const copyGameCode = () => {
@@ -201,67 +209,48 @@ export function GameModeSelect() {
       {/* Game Mode Cards */}
       <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
         {/* Solo Mode Card */}
-        <motion.div
-          className="perspective-1000"
-          variants={fadeIn}
-          custom={1}
-          whileHover={{ scale: 1.02, zIndex: 10 }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          <motion.div 
-            className="relative h-full bg-gradient-to-br from-amber-800/90 to-amber-950 rounded-2xl overflow-hidden shadow-xl border border-amber-500/20"
-            style={{ 
-              transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-              transition: "transform 0.1s ease",
+        <motion.div variants={fadeIn} className="col-span-1">
+          <Card 
+            className="bg-gradient-to-br from-blue-900 to-blue-950 hover:from-blue-800 hover:to-blue-900 transition-all duration-300 relative overflow-hidden border-blue-700/30 shadow-xl h-full"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+              transition: 'transform 0.1s'
             }}
           >
-            <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5" />
-            
-            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl" />
-            
-            <div className="p-6 md:p-8 h-full flex flex-col">
-              <div className="flex-1">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                  <FaUserSecret className="text-3xl text-white" />
+            <div className="p-6 flex flex-col h-full">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shadow-glow-blue">
+                  <FaUserSecret className="text-2xl text-white" />
                 </div>
-                
-                <h3 className="text-2xl font-bold text-amber-200 mb-3">Play Solo</h3>
-                <p className="text-amber-200/70 mb-6">
-                  Challenge yourself with a single-player game. Perfect for practicing or playing along with the show.
-                </p>
-                
-                <div className="space-y-3 mb-8">
-                  {["Create your team", "Select your advisor", "Track your wins"].map((feature, i) => (
-                    <div key={i} className="flex items-center">
-                      <div className="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center mr-3">
-                        <FiCheck className="text-white text-xs" />
-                      </div>
-                      <span className="text-amber-100/90 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-xl font-bold ml-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-blue-100">
+                  Single Player Mode
+                </h3>
               </div>
               
-              <motion.button
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white rounded-xl py-4 font-medium relative overflow-hidden group"
-                onClick={handleSinglePlayerMode}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span className="relative z-10 flex items-center justify-center">
-                  <HiOutlineLightningBolt className="text-xl mr-2" />
-                  Play Solo
-                </span>
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-r from-amber-400/0 via-amber-300/30 to-amber-400/0"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "100%" }}
-                  transition={{ duration: 0.8 }}
-                />
-              </motion.button>
+              <p className="text-blue-200 opacity-80 mb-6">
+                Play on your own with customizable team name and advisor selection.
+              </p>
+              
+              <div className="mt-auto flex flex-col gap-3">
+                <Button 
+                  onClick={handleSinglePlayerMode}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white"
+                >
+                  Single Player
+                </Button>
+                
+                <Button 
+                  onClick={handleQuickGameMode}
+                  className="w-full bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center gap-2"
+                >
+                  <BsFillLightningChargeFill className="text-yellow-300" />
+                  Quick Game
+                </Button>
+              </div>
             </div>
-          </motion.div>
+          </Card>
         </motion.div>
 
         {/* Multiplayer Card */}

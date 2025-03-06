@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useGameStore } from "@/lib/store/game-store";
 import { BingoSquare } from "./BingoSquare";
-import type { Win, WinType } from "@/lib/types";
+import type { Win, WinType, GameMode } from "@/lib/types";
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Trophy, Award, Medal } from "lucide-react";
@@ -14,8 +14,9 @@ import { WinMessage } from './WinMessage';
 import { cn } from '@/lib/utils';
 import { WinningAnimation } from './WinningAnimation';
 
-function checkForWins(grid: string[][], markedSquares: [number, number][]): Win[] {
-  const wins: Win[] = [];
+// Local version of checkForWins to use just for UI display
+function checkForWins(grid: string[][], markedSquares: [number, number][], gameMode: GameMode, targetNumber: number): Win[] {
+  const allPossibleWins: Win[] = [];
 
   // Helper function to check if a square is marked
   const isMarked = (row: number, col: number) => {
@@ -25,7 +26,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][]): Win[
   // Check rows
   for (let i = 0; i < 3; i++) {
     if (isMarked(i, 0) && isMarked(i, 1) && isMarked(i, 2)) {
-      wins.push({
+      allPossibleWins.push({
         type: `row_${i}` as WinType,
         squares: [[i, 0], [i, 1], [i, 2]],
         message: `Row ${i + 1} complete!`
@@ -36,7 +37,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][]): Win[
   // Check columns
   for (let j = 0; j < 3; j++) {
     if (isMarked(0, j) && isMarked(1, j) && isMarked(2, j)) {
-      wins.push({
+      allPossibleWins.push({
         type: `col_${j}` as WinType,
         squares: [[0, j], [1, j], [2, j]],
         message: `Column ${j + 1} complete!`
@@ -46,7 +47,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][]): Win[
 
   // Check diagonals
   if (isMarked(0, 0) && isMarked(1, 1) && isMarked(2, 2)) {
-    wins.push({
+    allPossibleWins.push({
       type: 'diag_1',
       squares: [[0, 0], [1, 1], [2, 2]],
       message: 'Diagonal (top-left to bottom-right) complete!'
@@ -54,7 +55,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][]): Win[
   }
 
   if (isMarked(0, 2) && isMarked(1, 1) && isMarked(2, 0)) {
-    wins.push({
+    allPossibleWins.push({
       type: 'diag_2',
       squares: [[0, 2], [1, 1], [2, 0]],
       message: 'Diagonal (top-right to bottom-left) complete!'
@@ -69,14 +70,39 @@ function checkForWins(grid: string[][], markedSquares: [number, number][]): Win[
         allSquares.push([i, j]);
       }
     }
-    wins.push({
+    allPossibleWins.push({
       type: 'full_house',
       squares: allSquares as [number, number][],
       message: 'FULL HOUSE! All squares complete!'
     });
   }
 
-  return wins;
+  // Check number mode
+  if (markedSquares.length >= targetNumber) {
+    allPossibleWins.push({
+      type: `number_${targetNumber}`,
+      squares: markedSquares.slice(0, targetNumber),
+      message: `${targetNumber} squares marked!`
+    });
+  }
+
+  // Filter wins based on game mode
+  let filteredWins: Win[] = [];
+  
+  if (gameMode === 'line') {
+    // In line mode, allow all line wins (rows, columns, diagonals)
+    filteredWins = allPossibleWins.filter(win => 
+      win.type.startsWith('row_') || win.type.startsWith('col_') || win.type.startsWith('diag_')
+    );
+  } else if (gameMode === 'full_house') {
+    // In full house mode, only allow the full house win
+    filteredWins = allPossibleWins.filter(win => win.type === 'full_house');
+  } else if (gameMode === 'number') {
+    // In number mode, only allow the target number win
+    filteredWins = allPossibleWins.filter(win => win.type === `number_${targetNumber}`);
+  }
+
+  return filteredWins;
 }
 
 // Enhanced confetti animation function
@@ -101,60 +127,11 @@ function fireConfetti(isFullHouse = false) {
   origins.forEach(origin => {
     confetti({
       ...defaults,
-      particleCount,
-      origin
+      origin,
+      particleCount: particleCount / origins.length,
+      zIndex: 9999
     });
   });
-
-  if (isFullHouse) {
-    // Massive gold confetti burst for full house
-    setTimeout(() => {
-      confetti({
-        ...defaults,
-        particleCount: 150,
-        origin: { x: 0.5, y: 0.3 },
-        colors: ['#d4af37', '#FFD700', '#FFDF00', '#DAA520']  // Gold colors
-      });
-    }, 750);
-
-    // Side bursts
-    setTimeout(() => {
-      confetti({
-        ...defaults,
-        particleCount: 120,
-        spread: 120,
-        origin: { x: 0.1, y: 0.5 }
-      });
-      confetti({
-        ...defaults,
-        particleCount: 120,
-        spread: 120,
-        origin: { x: 0.9, y: 0.5 }
-      });
-    }, 1500);
-
-    // Bottom burst
-    setTimeout(() => {
-      confetti({
-        ...defaults,
-        particleCount: 100,
-        spread: 120,
-        gravity: 0.2,
-        origin: { x: 0.5, y: 0.8 }
-      });
-    }, 2500);
-
-    // Final grand burst
-    setTimeout(() => {
-      confetti({
-        ...defaults,
-        particleCount: 200,
-        spread: 180,
-        startVelocity: 45,
-        origin: { x: 0.5, y: 0.5 }
-      });
-    }, 3500);
-  }
 }
 
 export function BingoGrid() {
@@ -204,7 +181,8 @@ export function BingoGrid() {
   React.useEffect(() => {
     if (!grid.length) return;
 
-    const wins = checkForWins(grid, markedSquares);
+    // Use the updated checkForWins function that respects game modes
+    const wins = checkForWins(grid, markedSquares, gameMode, targetNumber);
     
     // Add new wins that haven't been recorded yet
     wins.forEach(win => {
@@ -236,36 +214,6 @@ export function BingoGrid() {
         fireConfetti(win.type === 'full_house');
       }
     });
-
-    // Check for number mode win
-    if (gameMode === 'number' && markedSquares.length >= targetNumber) {
-      const numberWin: Win = {
-        type: `number_${targetNumber}`,
-        squares: markedSquares,
-        message: `You've marked ${targetNumber} squares!`
-      };
-      const isNewWin = !previousWins.some(prev => prev.type === numberWin.type);
-      if (isNewWin) {
-        addWin(numberWin);
-        setLastWin(numberWin);
-        
-        // Animate the grid for number win
-        gridAnimControls.start({
-          scale: [1, 1.03, 1],
-          transition: { duration: 0.6 }
-        });
-        
-        // Show winning animation for number win
-        setTimeout(() => {
-          setShowWinningAnimation(true);
-        }, 500);
-        
-        // Play success sound
-        playSuccess();
-        
-        fireConfetti(false);
-      }
-    }
   }, [markedSquares, grid, gameMode, targetNumber, addWin, previousWins, gridAnimControls, playBingo, playSuccess]);
 
   // Reset any win-related state when the grid changes
@@ -339,15 +287,28 @@ export function BingoGrid() {
             lastWin.squares.some(([r, c]) => r === row && c === col) : 
             false;
           
+          // Debug log for each square's state
+          React.useEffect(() => {
+            console.log(`Grid rendering square ${row},${col}: isSelected=${isSelected}, content=${content}`);
+          }, [row, col, isSelected, content]);
+          
           return (
-            <BingoSquare 
-              key={index}
-              index={index}
-              content={content}
-              isSelected={isSelected}
-              isLocked={isLocked}
-              isWinning={isWinning}
-            />
+            <motion.div
+              key={`square-${row}-${col}`}
+              custom={index}
+              initial="hidden"
+              animate="visible"
+              variants={gridItemVariants}
+            >
+              <BingoSquare 
+                key={index}
+                index={index}
+                content={content}
+                isSelected={isSelected}
+                isLocked={isLocked}
+                isWinning={isWinning}
+              />
+            </motion.div>
           );
         })}
 

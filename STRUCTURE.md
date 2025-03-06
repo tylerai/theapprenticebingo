@@ -2,6 +2,10 @@
 
 ```
 .
+├── __tests__
+│   ├── multiplayer.test.js
+│   ├── simple.test.js
+│   └── utils.test.js
 ├── instance
 │   └── apprentice_bingo.db
 ├── logs
@@ -10,24 +14,13 @@
 │   └── schema.prisma
 ├── public
 │   ├── images
-│   │   ├── alan-sugar-gif-1.gif
-│   │   ├── alan-sugar-gif-2.gif
-│   │   ├── alan-sugar-gif-3.gif
-│   │   ├── alan-sugar-gif-4.gif
-│   │   ├── alan-sugar-gif-5.gif
-│   │   ├── alan-sugar-gif-6.gif
 │   │   ├── alansugar.jpg
 │   │   ├── alansugar2.jpg
 │   │   ├── bingo-win.jpg
-│   │   ├── claude-gif-1.gif
-│   │   ├── claude-gif-2.gif
 │   │   ├── claude.jpg
 │   │   ├── favicon.ico
-│   │   ├── karen-gif-1.gif
-│   │   ├── karen-gif-2.gif
 │   │   ├── karenbrady.webp
 │   │   ├── margaret.jpeg
-│   │   ├── nick-gif-1.gif
 │   │   ├── nick.jpg
 │   │   ├── pattern.svg
 │   │   ├── skylinebackground.jpg
@@ -48,12 +41,23 @@
 │   │   ├── notification.mp3
 │   │   ├── success.mp3
 │   │   └── youre-fired.mp3
+│   ├── videos
+│   │   ├── alan-sugar-gif-1.webm
+│   │   ├── alan-sugar-gif-2.webm
+│   │   ├── alan-sugar-gif-3.webm
+│   │   ├── alan-sugar-gif-4.webm
+│   │   ├── alan-sugar-gif-5.webm
+│   │   ├── alan-sugar-gif-6.webm
+│   │   ├── claude-gif-1.webm
+│   │   ├── claude-gif-2.webm
+│   │   ├── karen-gif-1.webm
+│   │   ├── karen-gif-2.webm
+│   │   └── nick-gif-1.webm
 │   └── favicon.ico
 ├── src
-│   ├── __pycache__
-│   │   ├── __init__.cpython-313.pyc
-│   │   └── data.cpython-313.pyc
 │   ├── app
+│   │   ├── __tests__
+│   │   │   └── page.test.tsx
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
@@ -61,7 +65,11 @@
 │   │   ├── bingo
 │   │   │   ├── __tests__
 │   │   │   │   ├── BingoGrid.test.tsx
-│   │   │   │   └── BingoSquare.test.tsx
+│   │   │   │   ├── BingoSquare.test.tsx
+│   │   │   │   ├── GameControls.test.tsx
+│   │   │   │   ├── GameModeSelect.test.tsx
+│   │   │   │   ├── GameModeSelector.test.tsx
+│   │   │   │   └── TeamSelector.test.tsx
 │   │   │   ├── AdvisorAnimation.tsx
 │   │   │   ├── ApprenticeFacts.tsx
 │   │   │   ├── BingoGrid.tsx
@@ -75,41 +83,55 @@
 │   │   │   ├── TeamSelector.tsx
 │   │   │   ├── WinLine.tsx
 │   │   │   ├── WinMessage.tsx
-│   │   │   └── WinningAnimation.tsx
+│   │   │   ├── WinningAnimation.tsx
+│   │   │   ├── WinsList.tsx
+│   │   │   └── utils.ts
 │   │   └── ui
 │   │       ├── button.tsx
 │   │       ├── card.tsx
 │   │       └── input.tsx
-│   └── lib
-│       ├── store
-│       │   ├── __tests__
-│       │   │   └── game-store.test.ts
-│       │   └── game-store.ts
-│       ├── types
-│       │   └── index.ts
-│       ├── animations.ts
-│       ├── data.ts
-│       ├── facts.ts
-│       ├── sounds.ts
-│       ├── types.ts
-│       └── utils.ts
+│   ├── lib
+│   │   ├── __tests__
+│   │   │   ├── simple.test.js
+│   │   │   └── utils.test.ts
+│   │   ├── store
+│   │   │   ├── __tests__
+│   │   │   │   └── game-store.test.ts
+│   │   │   └── game-store.ts
+│   │   ├── types
+│   │   │   └── index.ts
+│   │   ├── animations.ts
+│   │   ├── data.ts
+│   │   ├── facts.ts
+│   │   ├── sounds.ts
+│   │   ├── types.ts
+│   │   ├── utils.test.js
+│   │   ├── utils.test.ts
+│   │   └── utils.ts
+│   └── types
+│       └── jest.d.ts
 ├── LICENSE
-├── Procfile
 ├── README.md
 ├── STRUCTURE.md
+├── TESTING.md
 ├── app_output.log
+├── babel.config.js
 ├── deploy.sh
 ├── deployment.md
+├── fix-tests.sh
 ├── guide.md
 ├── jest.config.js
 ├── jest.setup.js
+├── multiplayer.test.js
 ├── next-env.d.ts
+├── next.config.js
 ├── package-lock.json
 ├── package.json
 ├── postcss.config.js
-├── requirements.txt
+├── simple.test.js
 ├── tailwind.config.js
-└── tsconfig.json
+├── tsconfig.json
+└── utils.test.js
 
-19 directories, 90 files
+23 directories, 108 files
 ```
