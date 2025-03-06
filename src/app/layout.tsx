@@ -8,6 +8,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "The Apprentice (UK) Bingo",
   description: "A bingo game for The Apprentice UK TV show",
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 
 export default function RootLayout({
@@ -17,6 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="theme-color" content="#111827" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );

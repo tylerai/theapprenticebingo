@@ -173,7 +173,7 @@ export function GameModeSelect() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            Created for fans of The Apprentice • All content belongs to their respective owners
+            The Apprentice Bingo is a fan-made game, not affiliated with The Apprentice Game Show. 2023-2025
           </motion.div>
         </motion.div>
       </div>

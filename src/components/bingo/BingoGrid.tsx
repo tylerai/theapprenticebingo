@@ -273,7 +273,7 @@ export function BingoGrid() {
       {/* Grid Container */}
       <div 
         className={cn(
-          "grid grid-cols-3 gap-2 p-4 rounded-xl border border-amber-600/30 shadow-lg transition-all duration-500",
+          "grid grid-cols-3 gap-1 sm:gap-2 p-2 sm:p-4 rounded-xl border border-amber-600/30 shadow-lg transition-all duration-500",
           "bg-black/30 backdrop-blur-sm",
           showAnimation && "shake-animation"
         )}
@@ -299,6 +299,7 @@ export function BingoGrid() {
               initial="hidden"
               animate="visible"
               variants={gridItemVariants}
+              className="w-full"
             >
               <BingoSquare 
                 key={index}

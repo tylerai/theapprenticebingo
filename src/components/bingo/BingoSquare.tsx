@@ -73,7 +73,7 @@ export function BingoSquare({ index, content, isSelected, isLocked, isWinning = 
         repeatType: "loop"
       }}
       className={cn(
-        "relative w-full aspect-square px-2 py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-200",
+        "relative w-full aspect-square px-1 sm:px-2 py-1 sm:py-3 rounded-lg text-xs sm:text-sm md:text-base font-medium transition-all duration-200",
         "flex items-center justify-center",
         "shadow-md bg-opacity-90 backdrop-blur-sm",
         isActive
@@ -87,7 +87,7 @@ export function BingoSquare({ index, content, isSelected, isLocked, isWinning = 
       data-initialized={hasInitialized}
     >
       {/* Content */}
-      <div className="text-center px-1 flex-1 flex items-center justify-center min-h-[5rem] text-sm sm:text-base">
+      <div className="text-center px-0.5 sm:px-1 flex-1 flex items-center justify-center min-h-[3rem] sm:min-h-[4rem] md:min-h-[5rem] text-xs sm:text-sm md:text-base">
         {content}
       </div>
       
@@ -96,9 +96,10 @@ export function BingoSquare({ index, content, isSelected, isLocked, isWinning = 
         <motion.div 
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-2 right-2 bg-black bg-opacity-60 rounded-full p-0.5 z-10"
+          className="absolute top-1 sm:top-2 right-1 sm:right-2 bg-black bg-opacity-60 rounded-full p-0.5 z-10"
         >
-          <Check size={16} className="text-white" />
+          <Check size={12} className="text-white sm:hidden" />
+          <Check size={16} className="text-white hidden sm:block" />
         </motion.div>
       )}
     </motion.button>

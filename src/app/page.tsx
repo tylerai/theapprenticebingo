@@ -105,9 +105,9 @@ export default function Home() {
         variants={staggerChildren}
       >
         <ParallaxBackground src="/images/theapprenticescreen.jpeg" opacity={0.4}>
-          <div className="h-80 flex items-center justify-center bg-black/40">
+          <div className="h-40 sm:h-60 md:h-80 flex items-center justify-center bg-black/40">
             <motion.h1 
-              className="text-5xl font-bold text-center drop-shadow-lg"
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center drop-shadow-lg px-4"
               variants={slideInFromBottom}
             >
               <motion.span 
@@ -128,10 +128,10 @@ export default function Home() {
           </div>
         </ParallaxBackground>
         
-        <div className="container mx-auto px-4 py-12 flex-1 relative">
+        <div className="container mx-auto px-4 py-6 md:py-12 flex-1 relative">
           <div className="max-w-2xl mx-auto">
             <motion.div 
-              className="bg-gradient-to-b from-gray-800 to-gray-900 p-8 rounded-lg shadow-2xl border border-gray-700 relative overflow-hidden"
+              className="bg-gradient-to-b from-gray-800 to-gray-900 p-4 sm:p-8 rounded-lg shadow-2xl border border-gray-700 relative overflow-hidden"
               variants={fadeIn}
             >
               {/* Subtle boardroom pattern */}
@@ -157,9 +157,9 @@ export default function Home() {
         variants={staggerChildren}
       >
         <ParallaxBackground src="/images/team.jpg" opacity={0.4}>
-          <div className="h-80 flex items-center justify-center bg-black/40">
+          <div className="h-40 sm:h-60 md:h-80 flex items-center justify-center bg-black/40">
             <motion.h1 
-              className="text-5xl font-bold text-center drop-shadow-lg"
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center drop-shadow-lg px-4"
               variants={slideInFromBottom}
             >
               <span className="block text-white">Choose Your</span>
@@ -180,10 +180,10 @@ export default function Home() {
           </div>
         </ParallaxBackground>
         
-        <div className="container mx-auto px-4 py-12 flex-1">
+        <div className="container mx-auto px-4 py-6 md:py-12 flex-1">
           <div className="max-w-2xl mx-auto">
             <motion.div 
-              className="bg-gradient-to-b from-gray-800 to-gray-900 p-8 rounded-lg shadow-2xl border border-gray-700 overflow-hidden relative"
+              className="bg-gradient-to-b from-gray-800 to-gray-900 p-4 sm:p-8 rounded-lg shadow-2xl border border-gray-700 overflow-hidden relative"
               variants={fadeIn}
             >
               {/* Subtle boardroom pattern */}
@@ -210,9 +210,9 @@ export default function Home() {
         key="main-game"
       >
         <ParallaxBackground src="/images/alansugar.jpg" opacity={0.7} overlay={true}>
-          <div className="h-56 flex items-center justify-center">
+          <div className="h-40 sm:h-48 md:h-56 flex items-center justify-center">
             <motion.h1 
-              className="text-4xl md:text-5xl font-bold text-center drop-shadow-lg"
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center drop-shadow-lg px-4"
               variants={slideInFromBottom}
             >
               <motion.span 
@@ -238,16 +238,16 @@ export default function Home() {
           </div>
         </ParallaxBackground>
         
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Left sidebar - Game mode selection */}
             <motion.div 
-              className="lg:col-span-3"
+              className="lg:col-span-3 order-2 lg:order-1"
               variants={slideInFromLeft}
               custom={1}
             >
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
                 whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -274,12 +274,12 @@ export default function Home() {
 
             {/* Main content - Bingo grid and controls */}
             <motion.div 
-              className="lg:col-span-6 space-y-6"
+              className="lg:col-span-6 space-y-4 sm:space-y-6 order-1 lg:order-2"
               variants={fadeIn}
               custom={0}
             >
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
                 whileHover={{ y: -3, boxShadow: "0 20px 30px rgba(0, 0, 0, 0.3)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -291,7 +291,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
                 whileHover={{ y: -3, boxShadow: "0 20px 30px rgba(0, 0, 0, 0.3)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -305,12 +305,12 @@ export default function Home() {
 
             {/* Right sidebar - Leaderboard */}
             <motion.div 
-              className="lg:col-span-3"
+              className="lg:col-span-3 order-3"
               variants={slideInFromRight}
               custom={1}
             >
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-5 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden"
                 whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -337,7 +337,7 @@ export default function Home() {
                           <AdvisorAnimation
                             type="advisor"
                             variant={teamAdvisor}
-                            className="h-32 w-32 rounded-full border-2 border-amber-700/30 shadow-lg"
+                            className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-amber-700/30 shadow-lg"
                           />
                         </motion.div>
                       </div>

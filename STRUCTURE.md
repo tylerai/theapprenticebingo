@@ -53,7 +53,8 @@
 │   │   ├── karen-gif-1.webm
 │   │   ├── karen-gif-2.webm
 │   │   └── nick-gif-1.webm
-│   └── favicon.ico
+│   ├── favicon.ico
+│   └── favicon.svg
 ├── src
 │   ├── app
 │   │   ├── __tests__
@@ -133,5 +134,5 @@
 ├── tsconfig.json
 └── utils.test.js
 
-23 directories, 108 files
+23 directories, 109 files
 ```

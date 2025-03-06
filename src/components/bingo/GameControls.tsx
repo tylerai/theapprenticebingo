@@ -65,14 +65,14 @@ export function GameControls() {
       {/* Subtle boardroom pattern */}
       <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
       
-      <CardContent className="p-4 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+      <CardContent className="p-2 sm:p-4 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-2 sm:mb-4">
           {/* Reset marks button - available to all */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               variant="outline" 
               onClick={handleResetMarks}
-              className="w-full bg-amber-600/90 hover:bg-amber-700 text-white border-amber-700/50 flex items-center gap-2"
+              className="w-full bg-amber-600/90 hover:bg-amber-700 text-white border-amber-700/50 flex items-center gap-2 text-xs sm:text-sm"
             >
               <FiRefreshCw className="text-amber-200" />
               Reset Marks
@@ -84,7 +84,7 @@ export function GameControls() {
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button 
                 onClick={handleNewCard}
-                className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2 text-xs sm:text-sm"
               >
                 <FiGrid className="text-green-200" />
                 New Card
@@ -95,8 +95,8 @@ export function GameControls() {
         
         {/* Seed input and load button */}
         {(isHost || isSinglePlayer) && (
-          <div className="mb-4 p-3 bg-gray-900/50 rounded-md border border-gray-700">
-            <div className="text-xs text-gray-400 mb-2">Card Seed</div>
+          <div className="mb-2 sm:mb-4 p-2 sm:p-3 bg-gray-900/50 rounded-md border border-gray-700">
+            <div className="text-xs text-gray-400 mb-1 sm:mb-2">Card Seed</div>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -104,18 +104,18 @@ export function GameControls() {
                 onChange={(e) => setSeedInput(e.target.value)}
                 onKeyDown={handleSeedKeyDown}
                 placeholder={currentSeed}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200"
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-md px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-gray-200"
               />
               <Button
                 onClick={handleLoadSeed}
                 variant="secondary"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm"
                 disabled={!seedInput.trim()}
               >
                 Load
               </Button>
             </div>
-            <div className="text-xs text-gray-500 mt-1">Current seed: {currentSeed}</div>
+            <div className="text-xs text-gray-500 mt-1 truncate">{currentSeed.length > 20 ? `Current seed: ${currentSeed.substring(0, 20)}...` : `Current seed: ${currentSeed}`}</div>
           </div>
         )}
         
@@ -124,7 +124,7 @@ export function GameControls() {
           <Button 
             variant="destructive" 
             onClick={exitGame}
-            className="w-full flex items-center gap-2"
+            className="w-full flex items-center gap-2 text-xs sm:text-sm"
           >
             <FiPower />
             Exit Game
