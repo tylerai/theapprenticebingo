@@ -21,6 +21,7 @@ jest.mock('framer-motion', () => ({
     h1: ({ children, ...props }: any) => <h1 {...props}>{children}</h1>,
     span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
     main: ({ children, ...props }: any) => <main {...props}>{children}</main>,
+    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
   staggerChildren: {},
@@ -71,6 +72,10 @@ jest.mock('@/components/bingo/AdvisorAnimation', () => ({
   AdvisorAnimation: () => <div data-testid="advisor-animation">Advisor Animation</div>,
 }));
 
+jest.mock('@/components/bingo/WinsList', () => ({
+  WinsList: () => <div data-testid="wins-list">Wins List</div>
+}));
+
 describe('Home Page', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,9 +88,10 @@ describe('Home Page', () => {
           teamId: null,
           isHost: false,
           isSinglePlayer: false,
-          teamName: null,
+          teamName: '',
           teamAdvisor: null,
-          soloSetupMode: false,
+          teams: [],
+          soloSetupMode: false
         });
       }
       return jest.fn();
@@ -99,12 +105,13 @@ describe('Home Page', () => {
     ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
         return selector({
-          teamId: '1',
+          teamId: 'team-123',
           isHost: false,
           isSinglePlayer: false,
-          teamName: null,
+          teamName: '',
           teamAdvisor: null,
-          soloSetupMode: true,
+          teams: [{ id: 'team-123', name: '', advisor: null, wins: [] }],
+          soloSetupMode: false
         });
       }
       return jest.fn();
@@ -118,12 +125,13 @@ describe('Home Page', () => {
     ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
         return selector({
-          teamId: '1',
+          teamId: 'team-123',
           isHost: false,
           isSinglePlayer: true,
           teamName: 'Test Team',
           teamAdvisor: 'karen',
-          soloSetupMode: false,
+          teams: [{ id: 'team-123', name: 'Test Team', advisor: 'karen', wins: [] }],
+          soloSetupMode: false
         });
       }
       return jest.fn();

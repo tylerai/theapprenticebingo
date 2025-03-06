@@ -25,108 +25,119 @@ jest.mock('framer-motion', () => ({
 describe('GameControls', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Create a mock with the functions available in the component
     ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
         return selector({
-          isLocked: false,
-          setIsLocked: jest.fn(),
-          resetGame: jest.fn(),
-          prepareSoloMode: jest.fn(),
+          isHost: true,
+          isSinglePlayer: true,
+          resetMarks: jest.fn(),
+          regenerateCard: jest.fn(),
+          setGrid: jest.fn()
         });
       }
       return jest.fn();
     });
   });
 
-  it('renders the lock/unlock button', () => {
+  it('renders the Reset Marks button', () => {
     render(<GameControls />);
-    expect(screen.getByText(/Lock Board/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reset Marks/i)).toBeInTheDocument();
   });
 
-  it('renders the reset button', () => {
+  it('renders the New Card button when user is host or single player', () => {
     render(<GameControls />);
-    expect(screen.getByText(/Reset/i)).toBeInTheDocument();
+    expect(screen.getByText(/New Card/i)).toBeInTheDocument();
   });
 
-  it('renders the new game button', () => {
+  it('renders the Exit Game button', () => {
     render(<GameControls />);
-    expect(screen.getByText(/New Game/i)).toBeInTheDocument();
+    expect(screen.getByText(/Exit Game/i)).toBeInTheDocument();
   });
 
-  it('calls setIsLocked when lock button is clicked', async () => {
-    const mockSetIsLocked = jest.fn();
+  it('does not show New Card button when user is not host or single player', () => {
+    // Mock a non-host, non-single-player user
     ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
         return selector({
-          isLocked: false,
-          setIsLocked: mockSetIsLocked,
-          resetGame: jest.fn(),
-          prepareSoloMode: jest.fn(),
+          isHost: false,
+          isSinglePlayer: false,
+          resetMarks: jest.fn(),
+          regenerateCard: jest.fn(),
+          setGrid: jest.fn()
         });
       }
       return jest.fn();
     });
 
     render(<GameControls />);
-    const lockButton = screen.getByText(/Lock Board/i);
-    await userEvent.click(lockButton);
-    expect(mockSetIsLocked).toHaveBeenCalledWith(true);
+    expect(screen.queryByText(/New Card/i)).not.toBeInTheDocument();
   });
 
-  it('shows "Unlock Board" when board is locked', () => {
+  it('calls resetMarks when Reset Marks button is clicked', async () => {
+    const mockResetMarks = jest.fn();
     ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
         return selector({
-          isLocked: true,
-          setIsLocked: jest.fn(),
-          resetGame: jest.fn(),
-          prepareSoloMode: jest.fn(),
+          isHost: true,
+          isSinglePlayer: true,
+          resetMarks: mockResetMarks,
+          regenerateCard: jest.fn(),
+          setGrid: jest.fn()
         });
       }
       return jest.fn();
     });
 
     render(<GameControls />);
-    expect(screen.getByText(/Unlock Board/i)).toBeInTheDocument();
-  });
-
-  it('calls resetGame when reset button is clicked', async () => {
-    const mockResetGame = jest.fn();
-    ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
-      if (typeof selector === 'function') {
-        return selector({
-          isLocked: false,
-          setIsLocked: jest.fn(),
-          resetGame: mockResetGame,
-          prepareSoloMode: jest.fn(),
-        });
-      }
-      return jest.fn();
-    });
-
-    render(<GameControls />);
-    const resetButton = screen.getByText(/Reset/i);
+    const resetButton = screen.getByText(/Reset Marks/i);
     await userEvent.click(resetButton);
-    expect(mockResetGame).toHaveBeenCalled();
+    expect(mockResetMarks).toHaveBeenCalled();
   });
 
-  it('calls prepareSoloMode when new game button is clicked', async () => {
-    const mockPrepareSoloMode = jest.fn();
+  it('calls regenerateCard when New Card button is clicked', async () => {
+    const mockRegenerateCard = jest.fn();
     ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
         return selector({
-          isLocked: false,
-          setIsLocked: jest.fn(),
-          resetGame: jest.fn(),
-          prepareSoloMode: mockPrepareSoloMode,
+          isHost: true,
+          isSinglePlayer: true,
+          resetMarks: jest.fn(),
+          regenerateCard: mockRegenerateCard,
+          setGrid: jest.fn()
         });
       }
       return jest.fn();
     });
 
     render(<GameControls />);
-    const newGameButton = screen.getByText(/New Game/i);
-    await userEvent.click(newGameButton);
-    expect(mockPrepareSoloMode).toHaveBeenCalled();
+    const newCardButton = screen.getByText(/New Card/i);
+    await userEvent.click(newCardButton);
+    expect(mockRegenerateCard).toHaveBeenCalled();
+  });
+
+  it('displays the card seed input field when user is host or single player', () => {
+    render(<GameControls />);
+    expect(screen.getByPlaceholderText(/.+/)).toBeInTheDocument(); // Seed input has dynamic placeholder
+    expect(screen.getByText(/Card Seed/i)).toBeInTheDocument();
+  });
+
+  it('does not display the card seed input when user is not host or single player', () => {
+    // Mock a non-host, non-single-player user
+    ((useGameStore as unknown) as jest.Mock).mockImplementation((selector) => {
+      if (typeof selector === 'function') {
+        return selector({
+          isHost: false,
+          isSinglePlayer: false,
+          resetMarks: jest.fn(),
+          regenerateCard: jest.fn(),
+          setGrid: jest.fn()
+        });
+      }
+      return jest.fn();
+    });
+
+    render(<GameControls />);
+    expect(screen.queryByText(/Card Seed/i)).not.toBeInTheDocument();
   });
 }); 
