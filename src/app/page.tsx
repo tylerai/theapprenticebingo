@@ -339,7 +339,7 @@ export default function Home() {
                             type="advisor"
                             advisor={teamAdvisor}
                             size="large"
-                            animate={true}
+                            animate={false}
                           />
                         </motion.div>
                       </div>

@@ -710,7 +710,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-export function AdvisorAnimation({ advisor, animate = true }) {
+export function AdvisorAnimation({ advisor, animate = false }) {
   if (!advisor) return null;
   
   const getAdvisorImage = () => {
@@ -749,19 +749,7 @@ export function AdvisorAnimation({ advisor, animate = true }) {
   
   return (
     <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
-      <motion.div
-        initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
-        animate={animate ? { 
-          scale: [0.9, 1, 0.9],
-          y: [10, 0, 10]
-        } : { scale: 1 }}
-        transition={{ 
-          duration: 3,
-          repeat: Infinity,
-          repeatType: "reverse"
-        }}
-        className="relative w-full h-full flex items-center justify-center"
-      >
+      <div className="relative w-full h-full flex items-center justify-center">
         <div className="overflow-hidden rounded-full w-full h-full relative">
           <Image
             src={getAdvisorImage()}
@@ -772,7 +760,7 @@ export function AdvisorAnimation({ advisor, animate = true }) {
             priority
           />
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

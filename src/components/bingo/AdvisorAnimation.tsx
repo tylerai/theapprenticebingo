@@ -58,26 +58,14 @@ export function AdvisorAnimation({
   size = 'medium',
   forceVideo = false,
   advisor,
-  animate = true
+  animate = false
 }: AdvisorAnimationProps) {
   // Simple compatibility mode for vercel-build.js implementation
   // If only advisor prop is provided (no explicit type prop), use the simplified rendering
   if (advisor && (!type || type === 'advisor')) {
     return (
       <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg ${className}`}>
-        <motion.div
-          initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
-          animate={animate ? { 
-            scale: [0.9, 1, 0.9],
-            y: [10, 0, 10]
-          } : { scale: 1 }}
-          transition={{ 
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-          className="relative w-full h-full flex items-center justify-center"
-        >
+        <div className="relative w-full h-full flex items-center justify-center">
           <div className="overflow-hidden rounded-full w-full h-full relative">
             <Image
               src={getAdvisorImage(advisor)}
@@ -88,7 +76,7 @@ export function AdvisorAnimation({
               priority
             />
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
