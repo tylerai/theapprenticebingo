@@ -9,6 +9,8 @@ console.log('🔧 Starting simplified Vercel build...');
 // Create src/lib and src/lib/store directories if they don't exist
 const libDir = path.join(__dirname, 'src', 'lib');
 const storeDir = path.join(libDir, 'store');
+const componentsDir = path.join(__dirname, 'src', 'components');
+const bingoComponentsDir = path.join(componentsDir, 'bingo');
 
 if (!fs.existsSync(path.join(__dirname, 'src'))) {
   fs.mkdirSync(path.join(__dirname, 'src'));
@@ -20,6 +22,14 @@ if (!fs.existsSync(libDir)) {
 
 if (!fs.existsSync(storeDir)) {
   fs.mkdirSync(storeDir);
+}
+
+if (!fs.existsSync(componentsDir)) {
+  fs.mkdirSync(componentsDir);
+}
+
+if (!fs.existsSync(bingoComponentsDir)) {
+  fs.mkdirSync(bingoComponentsDir);
 }
 
 // Define real bingo options
@@ -68,7 +78,6 @@ function getRandomOptions(count) {
 // Create a more functional implementation of game-store.ts
 const gameStoreContent = `
 import { create } from 'zustand';
-import { GameMode, Team, Win, WinType } from '../types';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 // Initial state with actual bingo options
@@ -88,7 +97,7 @@ const initialState = {
   isLocked: false,
   isLive: false,
   isSinglePlayer: false,
-  gameMode: 'line' as GameMode,
+  gameMode: 'line',
   targetNumber: 5,
   wins: [],
   previousWins: [],
@@ -97,11 +106,11 @@ const initialState = {
 };
 
 // Helper function to check for wins
-function checkForWins(grid: string[][], markedSquares: [number, number][], gameMode: GameMode, targetNumber: number): Win[] {
-  const allPossibleWins: Win[] = [];
+function checkForWins(grid, markedSquares, gameMode, targetNumber) {
+  const allPossibleWins = [];
 
   // Helper function to check if a square is marked
-  const isMarked = (row: number, col: number) => {
+  const isMarked = (row, col) => {
     return markedSquares.some(([r, c]) => r === row && c === col);
   };
 
@@ -109,8 +118,8 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
   for (let i = 0; i < 3; i++) {
     if (isMarked(i, 0) && isMarked(i, 1) && isMarked(i, 2)) {
       allPossibleWins.push({
-        type: \`row_\${i}\` as WinType,
-        squares: [[i, 0], [i, 1], [i, 2]] as [number, number][],
+        type: \`row_\${i}\`,
+        squares: [[i, 0], [i, 1], [i, 2]],
         message: \`Row \${i + 1} complete!\`
       });
     }
@@ -120,8 +129,8 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
   for (let j = 0; j < 3; j++) {
     if (isMarked(0, j) && isMarked(1, j) && isMarked(2, j)) {
       allPossibleWins.push({
-        type: \`col_\${j}\` as WinType,
-        squares: [[0, j], [1, j], [2, j]] as [number, number][],
+        type: \`col_\${j}\`,
+        squares: [[0, j], [1, j], [2, j]],
         message: \`Column \${j + 1} complete!\`
       });
     }
@@ -131,7 +140,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
   if (isMarked(0, 0) && isMarked(1, 1) && isMarked(2, 2)) {
     allPossibleWins.push({
       type: 'diag_1',
-      squares: [[0, 0], [1, 1], [2, 2]] as [number, number][],
+      squares: [[0, 0], [1, 1], [2, 2]],
       message: 'Diagonal (top-left to bottom-right) complete!'
     });
   }
@@ -139,7 +148,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
   if (isMarked(0, 2) && isMarked(1, 1) && isMarked(2, 0)) {
     allPossibleWins.push({
       type: 'diag_2',
-      squares: [[0, 2], [1, 1], [2, 0]] as [number, number][],
+      squares: [[0, 2], [1, 1], [2, 0]],
       message: 'Diagonal (top-right to bottom-left) complete!'
     });
   }
@@ -154,13 +163,13 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
     }
     allPossibleWins.push({
       type: 'full_house',
-      squares: allSquares as [number, number][],
+      squares: allSquares,
       message: 'FULL HOUSE! All squares complete!'
     });
   }
 
   // Filter wins based on game mode
-  let filteredWins: Win[] = [];
+  let filteredWins = [];
   
   if (gameMode === 'line') {
     // In line mode, allow all line wins (rows, columns, diagonals)
@@ -175,7 +184,7 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
     if (markedSquares.length >= targetNumber) {
       filteredWins = [{
         type: \`number_\${targetNumber}\`,
-        squares: markedSquares.slice(0, targetNumber) as [number, number][],
+        squares: markedSquares.slice(0, targetNumber),
         message: \`\${targetNumber} squares marked!\`
       }];
     }
@@ -184,49 +193,26 @@ function checkForWins(grid: string[][], markedSquares: [number, number][], gameM
   return filteredWins;
 }
 
-// Define the interface for the game state
-export interface GameState {
-  grid: string[][];
-  markedSquares: [number, number][];
-  teams: Team[];
-  teamId: string;
-  gameId: string;
-  teamName: string;
-  teamAdvisor: 'karen' | 'tim' | 'claude' | 'nick' | 'margaret' | null;
-  isHost: boolean;
-  isLocked: boolean;
-  isLive: boolean;
-  isSinglePlayer: boolean;
-  gameMode: GameMode;
-  targetNumber: number;
-  wins: Win[];
-  previousWins: Win[];
-  soloSetupMode: boolean;
-  countdownRemaining: number;
-}
-
-// Define the interface for the game store
-export interface GameStore extends GameState {
-  initGame: (gameId: string, teamId: string, teamName: string, advisor: 'karen' | 'tim' | 'claude' | 'nick' | 'margaret') => void;
-  setTeams: (teams: Team[]) => void;
-  setGrid: (grid: string[][]) => void;
-  toggleSquare: (row: number, col: number) => void;
-  addWin: (win: Win) => void;
-  setGameMode: (mode: GameMode) => void;
-  setTargetNumber: (num: number) => void;
-  resetMarks: () => void;
-  regenerateCard: (seed?: string) => void;
-  resetGame: () => void;
-  initSinglePlayerMode: (teamName?: string, advisor?: 'karen' | 'tim' | 'claude' | 'nick' | 'margaret') => void;
-  initQuickGameMode: () => void;
-  prepareSoloMode: () => void;
-  setIsLocked: (locked: boolean) => void;
-  setIsLive: (live: boolean) => void;
-  setCountdownRemaining: (seconds: number) => void;
+// Function to get random bingo options from a static list
+function getRandomBingoOptions(count) {
+  const options = [
+    "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
+    "Candidate back-seat drives", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
+    "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
+    "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
+    "Lord Sugar makes a pun", "Team makes a loss", "Bitchy impersonation", "Stupid assumption",
+    "Wasted journey", "Team doesn't research", "Everyone interrupts", "Candidate answers phone in towel",
+    "Boardroom betrayal", "Karen gives death stare", "Claude gets angry", "Lord Sugar mentions East End",
+    "Double firing!", "Triple firing!", "Project Manager changes"
+  ];
+  
+  // Shuffle and pick options
+  const shuffled = [...options].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
 }
 
 // Create the actual store with persistence
-export const useGameStore = create<GameStore>()(
+export const useGameStore = create(
   persist(
     (set, get) => ({
       ...initialState,
@@ -234,6 +220,39 @@ export const useGameStore = create<GameStore>()(
       // Reset the entire game state
       resetGame: () => {
         set({ ...initialState });
+        
+        // Generate a fresh grid
+        const options = getRandomBingoOptions(9);
+        const grid = [];
+        for (let i = 0; i < 3; i++) {
+          const row = [];
+          for (let j = 0; j < 3; j++) {
+            row.push(options[i * 3 + j]);
+          }
+          grid.push(row);
+        }
+        set({ grid });
+        
+        // Force a refresh to clear the UI state
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      },
+      
+      // Hard reset that clears localStorage
+      hardReset: () => {
+        // Clear localStorage first
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem('apprentice-bingo-storage');
+        }
+        
+        // Reset state
+        set({ ...initialState });
+        
+        // Force a refresh
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
       },
 
       // Initialize a new game
@@ -268,10 +287,10 @@ export const useGameStore = create<GameStore>()(
         });
 
         // Generate a grid with actual content
-        const options = getRandomOptions(9);
-        const grid: string[][] = [];
+        const options = getRandomBingoOptions(9);
+        const grid = [];
         for (let i = 0; i < 3; i++) {
-          const row: string[] = [];
+          const row = [];
           for (let j = 0; j < 3; j++) {
             row.push(options[i * 3 + j]);
           }
@@ -293,7 +312,7 @@ export const useGameStore = create<GameStore>()(
             ([r, c]) => !(r === row && c === col)
           );
         } else {
-          newMarkedSquares = [...markedSquares, [row, col] as [number, number]];
+          newMarkedSquares = [...markedSquares, [row, col]];
         }
         
         set({ markedSquares: newMarkedSquares });
@@ -350,16 +369,27 @@ export const useGameStore = create<GameStore>()(
 
       regenerateCard: (seed) => {
         // Generate new bingo options
-        const options = getRandomOptions(9);
-        const grid: string[][] = [];
+        const options = getRandomBingoOptions(9);
+        const grid = [];
         for (let i = 0; i < 3; i++) {
-          const row: string[] = [];
+          const row = [];
           for (let j = 0; j < 3; j++) {
             row.push(options[i * 3 + j]);
           }
           grid.push(row);
         }
-        set({ grid });
+        set({ 
+          grid,
+          markedSquares: [], // Reset marked squares when card is regenerated
+          wins: [],          // Reset wins when card is regenerated
+          previousWins: []   // Reset previous wins when card is regenerated
+        });
+        
+        // Force a refresh to show the new card
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', '/');
+          window.dispatchEvent(new Event('popstate'));
+        }
       },
 
       // Functions that start the game modes
@@ -371,14 +401,17 @@ export const useGameStore = create<GameStore>()(
           teamAdvisor: advisor,
           isSinglePlayer: true,
           isHost: true,
-          soloSetupMode: false
+          soloSetupMode: false,
+          markedSquares: [], // Ensure marked squares are reset
+          wins: [],          // Ensure wins are reset
+          previousWins: []   // Ensure previous wins are reset
         });
         
         // Generate a grid with actual content
-        const options = getRandomOptions(9);
-        const grid: string[][] = [];
+        const options = getRandomBingoOptions(9);
+        const grid = [];
         for (let i = 0; i < 3; i++) {
-          const row: string[] = [];
+          const row = [];
           for (let j = 0; j < 3; j++) {
             row.push(options[i * 3 + j]);
           }
@@ -403,7 +436,7 @@ export const useGameStore = create<GameStore>()(
         
         // Pick random team name and advisor
         const teamName = teamNames[Math.floor(Math.random() * teamNames.length)];
-        const advisor = advisors[Math.floor(Math.random() * advisors.length)] as 'karen' | 'tim' | 'claude' | 'nick' | 'margaret';
+        const advisor = advisors[Math.floor(Math.random() * advisors.length)];
         
         set({ 
           teamId: 'quick-' + Date.now(),
@@ -411,14 +444,17 @@ export const useGameStore = create<GameStore>()(
           teamAdvisor: advisor,
           isSinglePlayer: true,
           isHost: true,
-          soloSetupMode: false
+          soloSetupMode: false,
+          markedSquares: [], // Ensure marked squares are reset
+          wins: [],          // Ensure wins are reset
+          previousWins: []   // Ensure previous wins are reset
         });
         
         // Generate a grid with actual content
-        const options = getRandomOptions(9);
-        const grid: string[][] = [];
+        const options = getRandomBingoOptions(9);
+        const grid = [];
         for (let i = 0; i < 3; i++) {
-          const row: string[] = [];
+          const row = [];
           for (let j = 0; j < 3; j++) {
             row.push(options[i * 3 + j]);
           }
@@ -451,26 +487,79 @@ export const useGameStore = create<GameStore>()(
     {
       name: 'apprentice-bingo-storage',
       storage: createJSONStorage(() => localStorage),
+      
+      // Add a partial serialization to handle browser refresh/reset
+      partialize: (state) => ({
+        ...state,
+        markedSquares: state.markedSquares,
+        grid: state.grid,
+        teamId: state.teamId,
+        teamName: state.teamName,
+        teamAdvisor: state.teamAdvisor,
+        isSinglePlayer: state.isSinglePlayer,
+        gameMode: state.gameMode,
+        wins: state.wins,
+        previousWins: state.previousWins
+      }),
     }
   )
 );
+`;
 
-// Helper function to get random bingo options
-function getRandomBingoOptions(count: number): string[] {
-  const options = [
-    "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
-    "Candidate back-seat drives", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
-    "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
-    "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
-    "Lord Sugar makes a pun", "Team makes a loss", "Bitchy impersonation", "Stupid assumption",
-    "Wasted journey", "Team doesn't research", "Everyone interrupts", "Candidate answers phone in towel",
-    "Boardroom betrayal", "Karen gives death stare", "Claude gets angry", "Lord Sugar mentions East End",
-    "Double firing!", "Triple firing!", "Project Manager changes"
-  ];
+// Create the AdvisorAnimation component
+const advisorAnimationContent = `
+'use client';
+
+import * as React from 'react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+
+export function AdvisorAnimation({ advisor, animate = true }) {
+  if (!advisor) return null;
   
-  // Shuffle and pick options
-  const shuffled = [...options].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  const getAdvisorImage = () => {
+    switch (advisor) {
+      case 'karen':
+        return '/images/advisors/karen.png';
+      case 'tim':
+        return '/images/advisors/tim.png';
+      case 'claude':
+        return '/images/advisors/claude.png';
+      case 'nick':
+        return '/images/advisors/nick.png';
+      case 'margaret':
+        return '/images/advisors/margaret.png';
+      default:
+        return '/images/advisors/karen.png';
+    }
+  };
+  
+  return (
+    <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
+      <motion.div
+        initial={animate ? { scale: 0.9, y: 10 } : false}
+        animate={animate ? { 
+          scale: [0.9, 1, 0.9],
+          y: [10, 0, 10]
+        } : {}}
+        transition={{ 
+          duration: 3,
+          repeat: Infinity,
+          repeatType: "reverse"
+        }}
+        className="relative w-full h-full"
+      >
+        <Image
+          src={getAdvisorImage()}
+          alt={\`Advisor \${advisor}\`}
+          fill
+          className="object-cover object-center"
+          sizes="(max-width: 768px) 100vw, 300px"
+          priority
+        />
+      </motion.div>
+    </div>
+  );
 }
 `;
 
@@ -653,204 +742,7 @@ export function useSounds() {
 }
 `;
 
-// Create WinningAnimation component
-const winningAnimationContent = `
-'use client';
-
-import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSounds } from '@/lib/sounds';
-import confetti from 'canvas-confetti';
-
-interface WinningAnimationProps {
-  isVisible: boolean;
-  onClose: () => void;
-}
-
-export function WinningAnimation({ isVisible, onClose }: WinningAnimationProps) {
-  const { playBingo } = useSounds();
-  const [phrase, setPhrase] = React.useState('');
-  
-  const winningPhrases = [
-    "BINGO CHAMPION!",
-    "ABSOLUTELY BRILLIANT!",
-    "TASK COMPLETED!",
-    "WINNER WINNER!",
-    "BOARDROOM MASTER!",
-    "PROJECT MANAGER MATERIAL!",
-    "CEO MATERIAL!",
-    "BUSINESS SUPERSTAR!",
-    "APPRENTICE STAR!",
-    "DEAL MAKER!",
-    "BUSINESS GENIUS!",
-    "PERFECT STRATEGY!"
-  ];
-  
-  // Play sound and trigger confetti when animation becomes visible
-  React.useEffect(() => {
-    if (isVisible) {
-      // Play sound
-      playBingo();
-      
-      // Set random phrase
-      setPhrase(winningPhrases[Math.floor(Math.random() * winningPhrases.length)]);
-      
-      // Trigger confetti explosion
-      try {
-        const duration = 5 * 1000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
-
-        const randomInRange = (min, max) => {
-          return Math.random() * (max - min) + min;
-        };
-
-        const interval = setInterval(() => {
-          const timeLeft = animationEnd - Date.now();
-
-          if (timeLeft <= 0) {
-            return clearInterval(interval);
-          }
-
-          const particleCount = 50 * (timeLeft / duration);
-          
-          // Create confetti bursts from different angles
-          if (typeof confetti === 'function') {
-            try {
-              confetti({
-                ...defaults,
-                particleCount,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-              });
-              confetti({
-                ...defaults,
-                particleCount,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-              });
-            } catch (err) {
-              console.error('Confetti error:', err);
-            }
-          }
-        }, 250);
-        
-        // Automatically close after 6 seconds
-        const timer = setTimeout(() => {
-          onClose();
-        }, 6000);
-        
-        return () => {
-          clearInterval(interval);
-          clearTimeout(timer);
-        };
-      } catch (error) {
-        console.error('Error in WinningAnimation effect:', error);
-        // Ensure we still close the animation even if there's an error
-        const timer = setTimeout(() => {
-          onClose();
-        }, 6000);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [isVisible, onClose, playBingo, winningPhrases]);
-  
-  // Fallback rendering if animation has an error
-  if (!winningPhrases || !phrase) {
-    return (
-      <AnimatePresence>
-        {isVisible && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-            <div className="bg-amber-500 p-8 rounded-xl text-white text-center">
-              <h2 className="text-3xl font-bold mb-4">YOU WIN!</h2>
-              <p className="mb-4">Congratulations on your victory!</p>
-              <button 
-                onClick={onClose}
-                className="bg-white text-amber-600 px-4 py-2 rounded font-medium"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
-      </AnimatePresence>
-    );
-  }
-  
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {/* Background with radial gradient */}
-          <motion.div 
-            className="absolute inset-0 bg-black/80"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          
-          {/* Main content */}
-          <motion.div
-            className="relative z-10 max-w-3xl w-full mx-4 flex flex-col items-center justify-center"
-            initial={{ scale: 0.5, y: 100 }}
-            animate={{ 
-              scale: 1, 
-              y: 0,
-              transition: { type: "spring", damping: 12, stiffness: 200 }
-            }}
-            exit={{ scale: 0.5, y: 100, opacity: 0, transition: { duration: 0.3 } }}
-          >
-            {/* Trophy icon */}
-            <motion.div
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ 
-                y: 0, 
-                opacity: 1,
-                transition: { delay: 0.3, duration: 0.5 }
-              }}
-              className="text-9xl mb-6"
-            >
-              🏆
-            </motion.div>
-            
-            {/* Main text */}
-            <motion.div
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 p-8 rounded-2xl text-center transform"
-            >
-              <motion.h2 
-                className="text-4xl md:text-6xl font-bold text-white mb-4"
-              >
-                {phrase}
-              </motion.h2>
-              
-              <motion.p 
-                className="text-xl text-white/90 font-medium"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { delay: 0.5 } }}
-              >
-                You've dominated the boardroom challenge!
-              </motion.p>
-              
-              <button
-                onClick={onClose}
-                className="mt-6 bg-white text-amber-600 px-6 py-3 rounded-full font-bold text-lg hover:bg-amber-100 transition-colors"
-              >
-                Continue
-              </button>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-`;
-
-// Add animations file
+// Create animations file
 const animationsContent = `
 export const fadeIn = {
   hidden: { opacity: 0 },
@@ -899,23 +791,13 @@ const files = [
   { path: path.join(storeDir, 'game-store.ts'), content: gameStoreContent },
   { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./facts";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
   { path: path.join(storeDir, 'index.ts'), content: '// Export from store directory\nexport * from "./game-store";' },
-  // Create WinningAnimation component
-  { path: path.join(__dirname, 'src', 'components', 'bingo'), mkdir: true },
-  { path: path.join(__dirname, 'src', 'components', 'bingo', 'WinningAnimation.tsx'), content: winningAnimationContent }
+  // Create AdvisorAnimation component
+  { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent }
 ];
 
 // Create all the files
 files.forEach(file => {
   try {
-    // Create directory if it doesn't exist
-    if (file.mkdir) {
-      if (!fs.existsSync(file.path)) {
-        fs.mkdirSync(file.path, { recursive: true });
-        console.log(`📁 Created directory: ${file.path}`);
-      }
-      return;
-    }
-
     // Create parent directories if they don't exist
     const dir = path.dirname(file.path);
     if (!fs.existsSync(dir)) {
