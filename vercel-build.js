@@ -24,13 +24,50 @@ if (!fs.existsSync(storeDir)) {
 
 // List of files to create
 const files = [
-  { path: path.join(libDir, 'animations.ts'), content: 'export const placeholder = true;' },
-  { path: path.join(libDir, 'data.ts'), content: 'export const placeholder = true;' },
+  { path: path.join(libDir, 'animations.ts'), content: 'export const placeholder = true;\nexport const fadeIn = {};\nexport const slideInFromBottom = {};\nexport const slideInFromLeft = {};\nexport const slideInFromRight = {};\nexport const staggerChildren = {};\nexport const boardroomBackground = {};' },
+  { path: path.join(libDir, 'data.ts'), content: 'export const placeholder = true;\nexport function getRandomOptions() { return []; }' },
   { path: path.join(libDir, 'facts.ts'), content: 'export const apprenticeFacts = ["Placeholder fact"];' },
   { path: path.join(libDir, 'sounds.ts'), content: 'export const useSounds = () => ({ playClick: () => {}, playSuccess: () => {}, playNotification: () => {} });' },
-  { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";' },
+  { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";\nexport interface Team { id: string; name: string; advisor: string; wins: any[]; }\nexport interface Win { type: string; squares: [number, number][]; message: string; };\nexport type WinType = string;' },
   { path: path.join(libDir, 'utils.ts'), content: 'export const cn = (...args) => args.filter(Boolean).join(" ");' },
-  { path: path.join(storeDir, 'game-store.ts'), content: 'export const useGameStore = (selector) => selector({ grid: [], markedSquares: [], teams: [], teamId: null, isHost: false, isLocked: false, isLive: false, isSinglePlayer: false, gameMode: "line", targetNumber: 5, wins: [] });' },
+  { 
+    path: path.join(storeDir, 'game-store.ts'), 
+    content: `export const useGameStore = (selector) => {
+  // Create a mock state object with all the required functions
+  const mockState = {
+    // Properties
+    grid: [],
+    markedSquares: [],
+    teams: [],
+    teamId: null,
+    isHost: false,
+    isLocked: false,
+    isLive: false,
+    isSinglePlayer: false,
+    gameMode: "line",
+    targetNumber: 5,
+    wins: [],
+    
+    // Functions that are used by the GameModeSelect component
+    initSinglePlayerMode: () => {},
+    initQuickGameMode: () => {},
+    prepareSoloMode: () => {},
+    
+    // Other functions
+    toggleSquare: () => {},
+    setGameMode: () => {},
+    setTargetNumber: () => {},
+    resetMarks: () => {},
+    regenerateCard: () => {},
+    setTeams: () => {},
+    setGrid: () => {},
+    addWin: () => {},
+    initGame: () => {}
+  };
+  
+  return typeof selector === 'function' ? selector(mockState) : mockState;
+};`
+  },
   { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./facts";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
   { path: path.join(storeDir, 'index.ts'), content: '// Export from store directory\nexport * from "./game-store";' }
 ];
