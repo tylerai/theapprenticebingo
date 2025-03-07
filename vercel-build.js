@@ -1004,6 +1004,340 @@ export const boardroomBackground = {
 };
 `;
 
+// Create the WinLine component
+const winLineContent = `
+'use client';
+
+import * as React from 'react';
+import { motion } from 'framer-motion';
+
+export function WinLine({ win }) {
+  if (!win || !win.type || !win.squares || win.squares.length < 3) return null;
+
+  let lineProps = {};
+  
+  // Set line position based on win type
+  if (win.type.startsWith('row')) {
+    const row = parseInt(win.type.split('_')[1]);
+    lineProps = {
+      className: "absolute bg-amber-400 h-1 w-0 left-0 rounded-full opacity-80 shadow-glow-sm",
+      style: { top: \`calc(\${(row + 0.5) * 33.333}%)\` },
+      animate: { width: '100%' },
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else if (win.type.startsWith('col')) {
+    const col = parseInt(win.type.split('_')[1]);
+    lineProps = {
+      className: "absolute bg-amber-400 w-1 h-0 top-0 rounded-full opacity-80 shadow-glow-sm",
+      style: { left: \`calc(\${(col + 0.5) * 33.333}%)\` },
+      animate: { height: '100%' },
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else if (win.type === 'diag_1') {
+    // Top-left to bottom-right
+    lineProps = {
+      className: "absolute bg-amber-400 h-1 w-0 opacity-80 shadow-glow-sm origin-top-left",
+      style: { 
+        top: '0', 
+        left: '0',
+        transformOrigin: 'top left',
+        transform: 'rotate(45deg)',
+        width: '0%',
+      },
+      animate: { width: '142%' }, // √2 * 100% to cover diagonal
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else if (win.type === 'diag_2') {
+    // Top-right to bottom-left
+    lineProps = {
+      className: "absolute bg-amber-400 h-1 w-0 opacity-80 shadow-glow-sm origin-top-right",
+      style: {
+        top: '0',
+        right: '0',
+        transformOrigin: 'top right',
+        transform: 'rotate(-45deg)',
+        width: '0%',
+      },
+      animate: { width: '142%' }, // √2 * 100% to cover diagonal
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else {
+    return null; // No line for full house or number wins
+  }
+
+  return <motion.div {...lineProps} />;
+}
+`;
+
+// Create the WinMessage component
+const winMessageContent = `
+'use client';
+
+import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy } from 'lucide-react';
+
+export function WinMessage({ show, onComplete }) {
+  React.useEffect(() => {
+    if (show) {
+      const timer = setTimeout(() => {
+        if (onComplete) onComplete();
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [show, onComplete]);
+  
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: -20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 20 }}
+          transition={{ duration: 0.4 }}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                     bg-gradient-to-br from-amber-600 to-amber-800 
+                     px-6 py-4 rounded-lg text-white text-center
+                     shadow-xl border-2 border-amber-400 z-50"
+        >
+          <Trophy className="w-12 h-12 text-amber-300 mx-auto mb-2" />
+          <h3 className="text-2xl font-bold mb-1">BINGO!</h3>
+          <p className="text-amber-200">You've completed a line!</p>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+`;
+
+// Create the BingoGrid component with win detection
+const bingoGridContent = `
+'use client';
+
+import * as React from 'react';
+import { useGameStore } from '@/lib/store/game-store';
+import { BingoSquare } from './BingoSquare';
+import { WinLine } from './WinLine';
+import { WinMessage } from './WinMessage';
+import { motion } from 'framer-motion';
+
+// Helper function to check for wins
+function checkForWins(grid, markedSquares, gameMode, targetNumber) {
+  const allPossibleWins = [];
+
+  // Helper function to check if a square is marked
+  const isMarked = (row, col) => {
+    return markedSquares.some(([r, c]) => r === row && c === col);
+  };
+
+  // Check rows
+  for (let i = 0; i < 3; i++) {
+    if (isMarked(i, 0) && isMarked(i, 1) && isMarked(i, 2)) {
+      allPossibleWins.push({
+        type: \`row_\${i}\`,
+        squares: [[i, 0], [i, 1], [i, 2]],
+        message: \`Row \${i + 1} complete!\`
+      });
+    }
+  }
+
+  // Check columns
+  for (let j = 0; j < 3; j++) {
+    if (isMarked(0, j) && isMarked(1, j) && isMarked(2, j)) {
+      allPossibleWins.push({
+        type: \`col_\${j}\`,
+        squares: [[0, j], [1, j], [2, j]],
+        message: \`Column \${j + 1} complete!\`
+      });
+    }
+  }
+
+  // Check diagonals
+  if (isMarked(0, 0) && isMarked(1, 1) && isMarked(2, 2)) {
+    allPossibleWins.push({
+      type: 'diag_1',
+      squares: [[0, 0], [1, 1], [2, 2]],
+      message: 'Diagonal (top-left to bottom-right) complete!'
+    });
+  }
+
+  if (isMarked(0, 2) && isMarked(1, 1) && isMarked(2, 0)) {
+    allPossibleWins.push({
+      type: 'diag_2',
+      squares: [[0, 2], [1, 1], [2, 0]],
+      message: 'Diagonal (top-right to bottom-left) complete!'
+    });
+  }
+
+  // Filter wins based on game mode
+  let filteredWins = [];
+  
+  if (gameMode === 'line') {
+    // In line mode, allow all line wins (rows, columns, diagonals)
+    filteredWins = allPossibleWins.filter(win => 
+      win.type.startsWith('row_') || win.type.startsWith('col_') || win.type.startsWith('diag_')
+    );
+  } else if (gameMode === 'full_house') {
+    // In full house mode, only allow the full house win
+    filteredWins = allPossibleWins.filter(win => win.type === 'full_house');
+  } else if (gameMode === 'number') {
+    // In number mode, only allow number wins
+    if (markedSquares.length >= targetNumber) {
+      filteredWins = [{
+        type: \`number_\${targetNumber}\`,
+        squares: markedSquares.slice(0, targetNumber),
+        message: \`\${targetNumber} squares marked!\`
+      }];
+    }
+  }
+
+  return filteredWins;
+}
+
+export function BingoGrid() {
+  const grid = useGameStore(state => state.grid);
+  const markedSquares = useGameStore(state => state.markedSquares);
+  const gameMode = useGameStore(state => state.gameMode);
+  const targetNumber = useGameStore(state => state.targetNumber);
+  const addWin = useGameStore(state => state.addWin);
+  const previousWins = useGameStore(state => state.previousWins);
+  const [lastWin, setLastWin] = React.useState(null);
+  const [showWinMessage, setShowWinMessage] = React.useState(false);
+
+  // Check for wins when marked squares change
+  React.useEffect(() => {
+    if (!grid || !grid.length) return;
+    
+    const wins = checkForWins(grid, markedSquares, gameMode, targetNumber);
+    
+    // Add new wins that haven't been recorded yet
+    wins.forEach(win => {
+      const isNewWin = !previousWins.some(prev => prev.type === win.type);
+      if (isNewWin) {
+        console.log("New win detected:", win.type);
+        addWin(win);
+        setLastWin(win);
+        setShowWinMessage(true);
+      }
+    });
+  }, [markedSquares, grid, gameMode, targetNumber, addWin, previousWins]);
+  
+  if (!grid || !grid.length) return null;
+
+  return (
+    <div className="relative w-full">
+      <div className="grid grid-cols-3 gap-1 sm:gap-2 p-2 sm:p-4 rounded-xl border border-amber-600/30 shadow-lg bg-black/30 relative">
+        {grid.flat().map((content, index) => {
+          const row = Math.floor(index / 3);
+          const col = index % 3;
+          const isSelected = markedSquares.some(([r, c]) => r === row && c === col);
+          const isWinning = lastWin && lastWin.squares ? 
+            lastWin.squares.some(([r, c]) => r === row && c === col) : 
+            false;
+          
+          return (
+            <BingoSquare 
+              key={index}
+              index={index}
+              content={content}
+              isSelected={isSelected}
+              isWinning={isWinning}
+            />
+          );
+        })}
+        
+        {/* Win Line Overlay */}
+        {lastWin && (
+          <WinLine win={lastWin} />
+        )}
+      </div>
+      
+      {/* Win Message */}
+      <WinMessage 
+        show={showWinMessage}
+        onComplete={() => setShowWinMessage(false)}
+      />
+    </div>
+  );
+}
+`;
+
+// Create BingoSquare component
+const bingoSquareContent = `
+'use client';
+
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { useGameStore } from '@/lib/store/game-store';
+import { cn } from '@/lib/utils';
+
+interface BingoSquareProps {
+  index: number;
+  content: string;
+  isSelected: boolean;
+  isWinning?: boolean;
+  isLocked?: boolean;
+}
+
+export function BingoSquare({ 
+  index, 
+  content, 
+  isSelected, 
+  isWinning = false,
+  isLocked = false
+}: BingoSquareProps) {
+  const row = Math.floor(index / 3);
+  const col = index % 3;
+  const toggleSquare = useGameStore(state => state.toggleSquare);
+
+  const handleClick = () => {
+    if (!isLocked) {
+      toggleSquare(row, col);
+    }
+  };
+
+  return (
+    <motion.div
+      whileHover={{ scale: isLocked ? 1 : 1.02 }}
+      whileTap={{ scale: isLocked ? 1 : 0.98 }}
+      className={cn(
+        "aspect-square p-2 sm:p-3 rounded-lg cursor-pointer transition-colors text-center flex flex-col justify-center",
+        "text-xs sm:text-sm border border-gray-700 shadow-sm",
+        isSelected ? (
+          isWinning ? 
+            "bg-amber-500 border-amber-400 text-amber-950" : 
+            "bg-amber-700/90 border-amber-600/50 text-amber-50"
+        ) : (
+          "bg-gray-800/90 border-gray-700 text-gray-300 hover:bg-gray-700/90 hover:text-white"
+        ),
+        isLocked && "opacity-80 cursor-default"
+      )}
+      onClick={handleClick}
+    >
+      <div 
+        className={cn(
+          "flex-1 flex items-center justify-center font-medium",
+          (isSelected && !isWinning) && "text-shadow-sm"
+        )}
+      >
+        <div className="text-center leading-tight sm:leading-snug">
+          {content}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+`;
+
+// Create utils.ts for cn function
+const utilsContent = `
+// Utility function to conditionally join classNames
+export function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}
+`;
+
 // List of files to create
 const files = [
   { path: path.join(libDir, 'animations.ts'), content: animationsContent },
@@ -1011,12 +1345,16 @@ const files = [
   { path: path.join(libDir, 'facts.ts'), content: 'export const apprenticeFacts = ["Lord Sugar started with just £100", "The show has been running since 2005", "Winners receive a £250,000 investment", "Over 100,000 people apply each series", "Karen Brady joined as an advisor in 2009", "Tim Campbell was the first winner of The Apprentice", "In the US version, the show was hosted by Donald Trump", "Claude Littner was originally just for the interview episodes", "In total, Lord Sugar has invested over £2.5 million in winners"];' },
   { path: path.join(libDir, 'sounds.ts'), content: soundsFileContent },
   { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";\nexport type WinType = string;\nexport interface Team { id: string; name: string; advisor: string; markedSquares?: [number, number][]; wins: Win[]; createdAt?: string; userId?: string; }\nexport interface Win { type: string; squares: [number, number][]; message: string; };' },
-  { path: path.join(libDir, 'utils.ts'), content: 'export const cn = (...args) => args.filter(Boolean).join(" ");' },
+  { path: path.join(libDir, 'utils.ts'), content: utilsContent },
   { path: path.join(storeDir, 'game-store.ts'), content: gameStoreContent },
   { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./facts";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
   { path: path.join(storeDir, 'index.ts'), content: '// Export from store directory\nexport * from "./game-store";' },
   // Create AdvisorAnimation component
-  { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent }
+  { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent },
+  { path: path.join(bingoComponentsDir, 'WinLine.tsx'), content: winLineContent },
+  { path: path.join(bingoComponentsDir, 'WinMessage.tsx'), content: winMessageContent },
+  { path: path.join(bingoComponentsDir, 'BingoGrid.tsx'), content: bingoGridContent },
+  { path: path.join(bingoComponentsDir, 'BingoSquare.tsx'), content: bingoSquareContent }
 ];
 
 // Create all the files
