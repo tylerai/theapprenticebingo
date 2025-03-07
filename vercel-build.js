@@ -1537,39 +1537,116 @@ export function GameProgress() {
 }
 `;
 
-// Create App page.tsx content with GameProgress instead of Leaderboard and enhanced BingoGrid
-const appPageContent = `
+// Create simple app page content with GameProgress instead of Leaderboard
+const simpleAppPageContent = `
 'use client';
 
 import * as React from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useGameStore } from "@/lib/store/game-store";
 import { BingoGrid } from "@/components/bingo/BingoGrid";
 import { GameControls } from "@/components/bingo/GameControls";
-import { TeamSelector } from "@/components/bingo/TeamSelector";
-import { GameModeSelector } from "@/components/bingo/GameModeSelector";
-import { GameModeSelect } from "@/components/bingo/GameModeSelect";
 import { GameProgress } from "@/components/bingo/GameProgress";
 import { ApprenticeFacts } from "@/components/bingo/ApprenticeFacts";
-import { useSounds } from "@/lib/sounds";
-import { fadeIn, slideInFromBottom, slideInFromLeft, slideInFromRight, staggerChildren } from "@/lib/animations";
 import { AdvisorAnimation } from "@/components/bingo/AdvisorAnimation";
 
-// Helper function to format advisor name for display
-function formatAdvisor(advisor) {
-  if (!advisor) return 'None';
+export default function Home() {
+  const teamAdvisor = useGameStore(state => state.teamAdvisor);
   
-  const nameMap = {
-    'karen': 'Karen Brady',
-    'tim': 'Tim Campbell',
-    'claude': 'Claude Littner',
-    'nick': 'Nick Hewer',
-    'margaret': 'Margaret Mountford'
-  };
-  
-  return nameMap[advisor] || advisor;
+  // Helper function to format advisor name for display
+  function formatAdvisor(advisor) {
+    if (!advisor) return 'None';
+    
+    const nameMap = {
+      'karen': 'Karen Brady',
+      'tim': 'Tim Campbell',
+      'claude': 'Claude Littner',
+      'nick': 'Nick Hewer',
+      'margaret': 'Margaret Mountford'
+    };
+    
+    return nameMap[advisor] || advisor;
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">
+          <span className="text-amber-400">The Apprentice</span>
+          <span className="text-white"> Bingo</span>
+        </h1>
+        
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
+          {/* Left sidebar - Lord Sugar */}
+          <div className="lg:col-span-3 order-2 lg:order-1">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
+              <div className="relative z-10">
+                <motion.div className="mt-4 flex items-center justify-center">
+                  <AdvisorAnimation
+                    type="lord-sugar"
+                    size="large"
+                    className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
+                    forceVideo={true}
+                  />
+                </motion.div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content - Bingo grid and controls */}
+          <div className="lg:col-span-6 space-y-4 sm:space-y-6 order-1 lg:order-2">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
+              <div className="relative z-10">
+                <BingoGrid />
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
+              <div className="relative z-10">
+                <GameControls />
+              </div>
+            </div>
+          </div>
+
+          {/* Right sidebar - Game Progress */}
+          <div className="lg:col-span-3 order-3">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden">
+              <div className="relative z-10 flex flex-col">
+                <GameProgress />
+                
+                {teamAdvisor && (
+                  <div className="mt-6">
+                    <h3 className="text-center text-white text-sm mb-3">Your Advisor</h3>
+                    <div className="flex justify-center">
+                      <motion.div className="w-24 h-24 sm:w-32 sm:h-32">
+                        <AdvisorAnimation
+                          type="advisor"
+                          advisor={teamAdvisor}
+                          size="large"
+                          animate={false}
+                        />
+                      </motion.div>
+                    </div>
+                    <p className="mt-2 text-center font-medium text-amber-400">
+                      {formatAdvisor(teamAdvisor)}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Apprentice Facts Component */}
+                <div className="mt-6">
+                  <ApprenticeFacts />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }
+`;
 
 // Create list of files to write
 const filesToWrite = [
@@ -1589,5 +1666,33 @@ const filesToWrite = [
   { path: path.join(bingoComponentsDir, 'BingoGrid.tsx'), content: enhancedBingoGridContent },
   { path: path.join(bingoComponentsDir, 'BingoSquare.tsx'), content: bingoSquareContent },
   { path: path.join(bingoComponentsDir, 'GameProgress.tsx'), content: gameProgressContent },
-  { path: path.join(__dirname, 'src', 'app', 'page.tsx'), content: appPageContent }
-]; 
+  { path: path.join(__dirname, 'src', 'app', 'page.tsx'), content: simpleAppPageContent }
+];
+
+// Create all the files
+filesToWrite.forEach(file => {
+  try {
+    // Create parent directories if they don't exist
+    const dir = path.dirname(file.path);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(`📁 Created directory: ${dir}`);
+    }
+
+    // Always create/update the files to ensure latest implementation
+    console.log(`📝 Creating/updating file: ${file.path}`);
+    fs.writeFileSync(file.path, file.content);
+  } catch (err) {
+    console.error(`❌ Error creating file ${file.path}:`, err);
+  }
+});
+
+// Run standard Next.js build
+console.log('🔨 Running standard Next.js build...');
+
+const result = spawnSync('npm', ['run', 'build'], {
+  stdio: 'inherit',
+  env: { ...process.env }
+});
+
+process.exit(result.status); }
