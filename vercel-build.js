@@ -1648,10 +1648,27 @@ export default function Home() {
 }
 `;
 
+// Add factsFileContent definition
+const factsFileContent = `
+/**
+ * Apprentice Facts
+ * A collection of interesting facts about The Apprentice TV show.
+ */
+
+export const apprenticeFacts = [
+  "Fact 1: The Apprentice debuted in 2005.",
+  "Fact 2: Known for its iconic boardroom sessions.",
+  "Fact 3: It has served as a launchpad for many business careers.",
+  "Fact 4: The show is famous for its dramatic confrontations.",
+  "Fact 5: It continues to inspire entrepreneurial spirit."
+];
+`;
+
 // Create list of files to write
 const filesToWrite = [
   { path: path.join(libDir, 'animations.ts'), content: animationsContent },
   { path: path.join(libDir, 'data.ts'), content: dataFileContent },
+  { path: path.join(libDir, 'facts.ts'), content: factsFileContent },
   { path: path.join(libDir, 'sounds.ts'), content: soundsFileContent },
   { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";\nexport type WinType = string;\nexport interface Team { id: string; name: string; advisor: string; markedSquares?: [number, number][]; wins: Win[]; createdAt?: string; userId?: string; }\nexport interface Win { type: string; squares: [number, number][]; message: string; };' },
   { path: path.join(libDir, 'utils.ts'), content: utilsContent },
