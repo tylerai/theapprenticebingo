@@ -1652,12 +1652,11 @@ export default function Home() {
 const filesToWrite = [
   { path: path.join(libDir, 'animations.ts'), content: animationsContent },
   { path: path.join(libDir, 'data.ts'), content: dataFileContent },
-  { path: path.join(libDir, 'facts.ts'), content: factsContent },
   { path: path.join(libDir, 'sounds.ts'), content: soundsFileContent },
   { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";\nexport type WinType = string;\nexport interface Team { id: string; name: string; advisor: string; markedSquares?: [number, number][]; wins: Win[]; createdAt?: string; userId?: string; }\nexport interface Win { type: string; squares: [number, number][]; message: string; };' },
   { path: path.join(libDir, 'utils.ts'), content: utilsContent },
   { path: path.join(storeDir, 'game-store.ts'), content: gameStoreContent },
-  { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./facts";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
+  { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
   { path: path.join(storeDir, 'index.ts'), content: '// Export from store directory\nexport * from "./game-store";' },
   // Create components
   { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent },
