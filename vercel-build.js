@@ -39,7 +39,7 @@ const bingoOptions = [
   "Epic negotiation fail",
   "Stupid assumption",
   "Bad attempt at foreign language",
-  "Team doesn\\'t know what something obvious is",
+  "Team doesn't know what something obvious is",
   "Mispronunciation of everyday word",
   "Wasted journey",
   "Product development epic fail",
@@ -92,7 +92,7 @@ function getRandomOptions(count, seed) {
     const random = seededRandom(seed);
     
     // Shuffle using Fisher-Yates with seeded random
-    const shuffled = [...bingoOptions].map(option => option.replace(/'/g, "\\'"));
+    const shuffled = [...bingoOptions];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -101,8 +101,8 @@ function getRandomOptions(count, seed) {
     return shuffled.slice(0, count);
   }
   
-  const shuffled = [...bingoOptions].map(option => option.replace(/'/g, "\\'"));
-  return shuffled.sort(() => Math.random() - 0.5).slice(0, count);
+  const shuffled = [...bingoOptions].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
 }
 
 // Function to get random bingo options from a static list
@@ -113,13 +113,10 @@ function getRandomBingoOptions(count, seed) {
     "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
     "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
     "Lord Sugar makes a pun", "Team makes a loss", "Bitchy impersonation", "Stupid assumption",
-    "Wasted journey", "Team doesn\\'t research", "Everyone interrupts", "Candidate answers phone in towel",
+    "Wasted journey", "Team doesn't research", "Everyone interrupts", "Candidate answers phone in towel",
     "Boardroom betrayal", "Karen gives death stare", "Claude gets angry", "Lord Sugar mentions East End",
     "Double firing!", "Triple firing!", "Project Manager changes"
   ];
-  
-  // Make sure all options have escaped apostrophes for use in template strings
-  const safeOptions = options.map(option => option.replace(/'/g, "\\'"));
   
   // If seed is provided, use seeded random
   if (seed) {
@@ -142,7 +139,7 @@ function getRandomBingoOptions(count, seed) {
     const random = seededRandom(seed);
     
     // Shuffle using Fisher-Yates with seeded random
-    const shuffled = [...safeOptions];
+    const shuffled = [...options];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -152,7 +149,7 @@ function getRandomBingoOptions(count, seed) {
   }
   
   // Otherwise use regular shuffle
-  const shuffled = [...safeOptions].sort(() => 0.5 - Math.random());
+  const shuffled = [...options].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
 
@@ -161,12 +158,31 @@ const gameStoreContent = `
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+// Generate random options for the initial grid
+function getInitialGridOptions() {
+  const options = [
+    "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
+    "Candidate back-seat drives PM", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
+    "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
+    "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
+    "Lord Sugar makes a pun", "Team makes a loss", "Stupid assumption", 
+    "Wasted journey", "Everyone interrupts", "Candidate answers phone in towel", 
+    "Boardroom betrayal", "Karen gives death stare", "Claude gets angry"
+  ];
+  
+  const shuffled = [...options].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 9); // Get 9 random options
+}
+
+// Get options for the initial grid
+const initialGridOptions = getInitialGridOptions();
+
 // Initial state with actual bingo options
 const initialState = {
   grid: [
-    ['${getRandomOptions(9)[0]}', '${getRandomOptions(9)[1]}', '${getRandomOptions(9)[2]}'],
-    ['${getRandomOptions(9)[3]}', '${getRandomOptions(9)[4]}', '${getRandomOptions(9)[5]}'],
-    ['${getRandomOptions(9)[6]}', '${getRandomOptions(9)[7]}', '${getRandomOptions(9)[8]}']
+    [initialGridOptions[0], initialGridOptions[1], initialGridOptions[2]],
+    [initialGridOptions[3], initialGridOptions[4], initialGridOptions[5]],
+    [initialGridOptions[6], initialGridOptions[7], initialGridOptions[8]]
   ],
   markedSquares: [],
   teams: [],
@@ -510,15 +526,17 @@ export const useGameStore = create(
       regenerateCard: (seed) => {
         // Get options with seed if provided
         const options = getRandomBingoOptions(9, seed);
-        const grid = [
+        
+        // Create the grid data structure directly
+        const newGrid = [
           [options[0], options[1], options[2]],
-          [options[3], options[4], options[5]],
+          [options[3], options[4], options[5]], 
           [options[6], options[7], options[8]]
         ];
         
         // Reset marks and set the new grid
         set({ 
-          grid,
+          grid: newGrid,
           markedSquares: [],
           wins: [],
           previousWins: []
