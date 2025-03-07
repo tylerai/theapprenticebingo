@@ -1077,50 +1077,64 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 
-export function WinMessage({ show, onComplete }) {
+export function WinMessage({ show, onComplete, message = "You've completed a line!" }) {
   React.useEffect(() => {
     if (show) {
+      console.log('Showing win message with auto-dismiss');
       const timer = setTimeout(() => {
-        if (onComplete) onComplete();
+        if (onComplete) {
+          console.log('Auto-dismissing win message');
+          onComplete();
+        }
       }, 3000);
       
       return () => clearTimeout(timer);
     }
   }, [show, onComplete]);
   
+  // For debugging
+  React.useEffect(() => {
+    console.log('WinMessage rendered with show =', show);
+  }, [show]);
+  
+  if (!show) return null;
+  
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: -20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 20 }}
-          transition={{ duration: 0.4 }}
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                     bg-gradient-to-br from-amber-600 to-amber-800 
-                     px-6 py-4 rounded-lg text-white text-center
-                     shadow-xl border-2 border-amber-400 z-50"
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.8, y: 20 }}
+        transition={{ duration: 0.4 }}
+        className="bg-gradient-to-br from-amber-600 to-amber-800 
+                   px-8 py-6 rounded-lg text-white text-center
+                   shadow-xl border-2 border-amber-400"
+      >
+        <Trophy className="w-16 h-16 text-amber-300 mx-auto mb-3" />
+        <h3 className="text-3xl font-bold mb-2">BINGO!</h3>
+        <p className="text-amber-200 text-lg">{message}</p>
+        <button 
+          onClick={onComplete}
+          className="mt-4 px-4 py-2 bg-amber-800 hover:bg-amber-700 rounded-lg font-medium text-sm"
         >
-          <Trophy className="w-12 h-12 text-amber-300 mx-auto mb-2" />
-          <h3 className="text-2xl font-bold mb-1">BINGO!</h3>
-          <p className="text-amber-200">You've completed a line!</p>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          Continue
+        </button>
+      </motion.div>
+    </div>
   );
 }
 `;
 
-// Create the BingoGrid component with win detection
-const bingoGridContent = `
+// Create updated BingoGrid with enhanced win detection
+const enhancedBingoGridContent = `
 'use client';
 
 import * as React from 'react';
 import { useGameStore } from '@/lib/store/game-store';
 import { BingoSquare } from './BingoSquare';
 import { WinLine } from './WinLine';
-import { WinMessage } from './WinMessage';
 import { motion } from 'framer-motion';
+import { Trophy } from 'lucide-react';
 
 // Helper function to check for wins
 function checkForWins(grid, markedSquares, gameMode, targetNumber) {
@@ -1170,6 +1184,21 @@ function checkForWins(grid, markedSquares, gameMode, targetNumber) {
     });
   }
 
+  // Check full house
+  if (markedSquares.length === 9) {
+    const allSquares = [];
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        allSquares.push([i, j]);
+      }
+    }
+    allPossibleWins.push({
+      type: 'full_house',
+      squares: allSquares,
+      message: 'FULL HOUSE! All squares complete!'
+    });
+  }
+
   // Filter wins based on game mode
   let filteredWins = [];
   
@@ -1205,11 +1234,29 @@ export function BingoGrid() {
   const [lastWin, setLastWin] = React.useState(null);
   const [showWinMessage, setShowWinMessage] = React.useState(false);
 
+  // Debug flag for win detection
+  const [debug, setDebug] = React.useState({
+    winChecks: 0,
+    checkedAt: null,
+    lastWinFound: null
+  });
+
   // Check for wins when marked squares change
   React.useEffect(() => {
     if (!grid || !grid.length) return;
     
+    // Log for debugging
+    console.log('Checking for wins with', markedSquares.length, 'marked squares');
+    
+    // Update debug info
+    setDebug(prev => ({
+      winChecks: prev.winChecks + 1,
+      checkedAt: new Date().toISOString(),
+      lastWinFound: null
+    }));
+    
     const wins = checkForWins(grid, markedSquares, gameMode, targetNumber);
+    console.log('Found wins:', wins);
     
     // Add new wins that haven't been recorded yet
     wins.forEach(win => {
@@ -1218,12 +1265,36 @@ export function BingoGrid() {
         console.log("New win detected:", win.type);
         addWin(win);
         setLastWin(win);
+        
+        // Update debug info
+        setDebug(prev => ({
+          ...prev,
+          lastWinFound: win.type
+        }));
+        
+        // Always show win message for new wins
         setShowWinMessage(true);
+        
+        // To ensure the animation re-triggers for subsequent wins, 
+        // we need to reset it briefly
+        setTimeout(() => {
+          setShowWinMessage(false);
+          setTimeout(() => {
+            setShowWinMessage(true);
+          }, 50);
+        }, 10);
       }
     });
   }, [markedSquares, grid, gameMode, targetNumber, addWin, previousWins]);
   
   if (!grid || !grid.length) return null;
+
+  // Display debug info in development if needed
+  const debugInfo = false ? (
+    <div className="absolute top-0 right-0 bg-black/70 text-white text-xs p-1 rounded">
+      Checks: {debug.winChecks} | Last: {debug.lastWinFound || 'none'}
+    </div>
+  ) : null;
 
   return (
     <div className="relative w-full">
@@ -1251,13 +1322,34 @@ export function BingoGrid() {
         {lastWin && (
           <WinLine win={lastWin} />
         )}
+        
+        {debugInfo}
       </div>
       
-      {/* Win Message */}
-      <WinMessage 
-        show={showWinMessage}
-        onComplete={() => setShowWinMessage(false)}
-      />
+      {/* Win Message - Made more visible and larger */}
+      {showWinMessage && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.4 }}
+            className="bg-gradient-to-br from-amber-600 to-amber-800 
+                     px-8 py-6 rounded-lg text-white text-center
+                     shadow-xl border-2 border-amber-400"
+          >
+            <Trophy className="w-16 h-16 text-amber-300 mx-auto mb-3" />
+            <h3 className="text-3xl font-bold mb-2">BINGO!</h3>
+            <p className="text-amber-200 text-lg">{lastWin ? lastWin.message : "You've completed a line!"}</p>
+            <button 
+              onClick={() => setShowWinMessage(false)}
+              className="mt-4 px-4 py-2 bg-amber-800 hover:bg-amber-700 rounded-lg font-medium text-sm"
+            >
+              Continue
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1338,49 +1430,164 @@ export function cn(...classes: (string | boolean | undefined)[]) {
 }
 `;
 
-// List of files to create
-const files = [
+// Create a GameProgress component to replace the Leaderboard
+const gameProgressContent = `
+'use client';
+
+import * as React from 'react';
+import { useGameStore } from '@/lib/store/game-store';
+import { motion } from 'framer-motion';
+import { Award, Check, Trophy } from 'lucide-react';
+
+export function GameProgress() {
+  const grid = useGameStore(state => state.grid);
+  const markedSquares = useGameStore(state => state.markedSquares);
+  const wins = useGameStore(state => state.wins);
+  const gameMode = useGameStore(state => state.gameMode);
+  const targetNumber = useGameStore(state => state.targetNumber);
+  
+  const totalSquares = grid.length ? grid.flat().length : 9;
+  const markedCount = markedSquares.length;
+  const progressPercentage = Math.round((markedCount / totalSquares) * 100);
+  
+  // Get the appropriate game objective based on game mode
+  const getGameObjective = () => {
+    switch (gameMode) {
+      case 'line':
+        return 'Complete a row, column, or diagonal';
+      case 'full_house':
+        return 'Mark all squares (Full House)';
+      case 'number':
+        return \`Mark \${targetNumber} squares\`;
+      default:
+        return 'Complete a line';
+    }
+  };
+  
+  // Display wins based on type
+  const renderWins = () => {
+    if (!wins.length) return null;
+    
+    return (
+      <div className="mt-4 space-y-2">
+        <h3 className="text-sm font-medium text-amber-400 mb-2">Achievements</h3>
+        <div className="space-y-2">
+          {wins.map((win, index) => (
+            <div 
+              key={index} 
+              className="flex items-center bg-gray-800 rounded-lg p-2 border border-gray-700"
+            >
+              {win.type.startsWith('row') && (
+                <Award className="mr-2 text-amber-400" size={16} />
+              )}
+              {win.type.startsWith('col') && (
+                <Award className="mr-2 text-amber-400" size={16} />
+              )}
+              {win.type.startsWith('diag') && (
+                <Trophy className="mr-2 text-amber-400" size={16} />
+              )}
+              {win.type === 'full_house' && (
+                <Trophy className="mr-2 text-amber-400" size={16} />
+              )}
+              <span className="text-xs text-gray-300">
+                {win.type === 'full_house' ? 'FULL HOUSE!' : 
+                 win.type.startsWith('row_') ? \`Row \${parseInt(win.type.split('_')[1]) + 1} Complete\` :
+                 win.type.startsWith('col_') ? \`Column \${parseInt(win.type.split('_')[1]) + 1} Complete\` :
+                 win.type === 'diag_1' ? 'Diagonal (↘) Complete' :
+                 win.type === 'diag_2' ? 'Diagonal (↙) Complete' : 
+                 win.message}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-lg font-semibold text-white">Game Progress</h2>
+      
+      <div>
+        <h3 className="text-sm font-medium text-gray-400 mb-2">Objective</h3>
+        <div className="p-2 bg-gray-800 rounded-lg text-sm text-white">
+          {getGameObjective()}
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-sm font-medium text-gray-400 mb-2">Progress</h3>
+        <div className="flex items-center text-sm text-white mb-2">
+          <span>{markedCount} of {totalSquares} squares marked</span>
+          <span className="ml-auto">{progressPercentage}%</span>
+        </div>
+        <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-amber-500"
+            initial={{ width: '0%' }}
+            animate={{ width: \`\${progressPercentage}%\` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+      </div>
+      
+      {renderWins()}
+    </div>
+  );
+}
+`;
+
+// Create App page.tsx content with GameProgress instead of Leaderboard and enhanced BingoGrid
+const appPageContent = `
+'use client';
+
+import * as React from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { useGameStore } from "@/lib/store/game-store";
+import { BingoGrid } from "@/components/bingo/BingoGrid";
+import { GameControls } from "@/components/bingo/GameControls";
+import { TeamSelector } from "@/components/bingo/TeamSelector";
+import { GameModeSelector } from "@/components/bingo/GameModeSelector";
+import { GameModeSelect } from "@/components/bingo/GameModeSelect";
+import { GameProgress } from "@/components/bingo/GameProgress";
+import { ApprenticeFacts } from "@/components/bingo/ApprenticeFacts";
+import { useSounds } from "@/lib/sounds";
+import { fadeIn, slideInFromBottom, slideInFromLeft, slideInFromRight, staggerChildren } from "@/lib/animations";
+import { AdvisorAnimation } from "@/components/bingo/AdvisorAnimation";
+
+// Helper function to format advisor name for display
+function formatAdvisor(advisor) {
+  if (!advisor) return 'None';
+  
+  const nameMap = {
+    'karen': 'Karen Brady',
+    'tim': 'Tim Campbell',
+    'claude': 'Claude Littner',
+    'nick': 'Nick Hewer',
+    'margaret': 'Margaret Mountford'
+  };
+  
+  return nameMap[advisor] || advisor;
+}
+
+// Create list of files to write
+const filesToWrite = [
   { path: path.join(libDir, 'animations.ts'), content: animationsContent },
   { path: path.join(libDir, 'data.ts'), content: dataFileContent },
-  { path: path.join(libDir, 'facts.ts'), content: 'export const apprenticeFacts = ["Lord Sugar started with just £100", "The show has been running since 2005", "Winners receive a £250,000 investment", "Over 100,000 people apply each series", "Karen Brady joined as an advisor in 2009", "Tim Campbell was the first winner of The Apprentice", "In the US version, the show was hosted by Donald Trump", "Claude Littner was originally just for the interview episodes", "In total, Lord Sugar has invested over £2.5 million in winners"];' },
+  { path: path.join(libDir, 'facts.ts'), content: factsContent },
   { path: path.join(libDir, 'sounds.ts'), content: soundsFileContent },
   { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";\nexport type WinType = string;\nexport interface Team { id: string; name: string; advisor: string; markedSquares?: [number, number][]; wins: Win[]; createdAt?: string; userId?: string; }\nexport interface Win { type: string; squares: [number, number][]; message: string; };' },
   { path: path.join(libDir, 'utils.ts'), content: utilsContent },
   { path: path.join(storeDir, 'game-store.ts'), content: gameStoreContent },
   { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./facts";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
   { path: path.join(storeDir, 'index.ts'), content: '// Export from store directory\nexport * from "./game-store";' },
-  // Create AdvisorAnimation component
+  // Create components
   { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent },
   { path: path.join(bingoComponentsDir, 'WinLine.tsx'), content: winLineContent },
   { path: path.join(bingoComponentsDir, 'WinMessage.tsx'), content: winMessageContent },
-  { path: path.join(bingoComponentsDir, 'BingoGrid.tsx'), content: bingoGridContent },
-  { path: path.join(bingoComponentsDir, 'BingoSquare.tsx'), content: bingoSquareContent }
-];
-
-// Create all the files
-files.forEach(file => {
-  try {
-    // Create parent directories if they don't exist
-    const dir = path.dirname(file.path);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`📁 Created directory: ${dir}`);
-    }
-
-    // Always create/update the files to ensure latest implementation
-    console.log(`📝 Creating/updating file: ${file.path}`);
-    fs.writeFileSync(file.path, file.content);
-  } catch (err) {
-    console.error(`❌ Error creating file ${file.path}:`, err);
-  }
-});
-
-// Run standard Next.js build
-console.log('🔨 Running standard Next.js build...');
-
-const result = spawnSync('npm', ['run', 'build'], {
-  stdio: 'inherit',
-  env: { ...process.env }
-});
-
-process.exit(result.status); 
+  { path: path.join(bingoComponentsDir, 'BingoGrid.tsx'), content: enhancedBingoGridContent },
+  { path: path.join(bingoComponentsDir, 'BingoSquare.tsx'), content: bingoSquareContent },
+  { path: path.join(bingoComponentsDir, 'GameProgress.tsx'), content: gameProgressContent },
+  { path: path.join(__dirname, 'src', 'app', 'page.tsx'), content: appPageContent }
+]; 
