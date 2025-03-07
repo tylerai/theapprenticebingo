@@ -1695,4 +1695,4 @@ const result = spawnSync('npm', ['run', 'build'], {
   env: { ...process.env }
 });
 
-process.exit(result.status); }
+process.exit(result.status);
