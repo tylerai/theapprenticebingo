@@ -39,7 +39,7 @@ const bingoOptions = [
   "Epic negotiation fail",
   "Stupid assumption",
   "Bad attempt at foreign language",
-  "Team doesn't know what something obvious is",
+  "Team doesn\\'t know what something obvious is",
   "Mispronunciation of everyday word",
   "Wasted journey",
   "Product development epic fail",
@@ -92,7 +92,7 @@ function getRandomOptions(count, seed) {
     const random = seededRandom(seed);
     
     // Shuffle using Fisher-Yates with seeded random
-    const shuffled = [...bingoOptions];
+    const shuffled = [...bingoOptions].map(option => option.replace(/'/g, "\\'"));
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -101,8 +101,8 @@ function getRandomOptions(count, seed) {
     return shuffled.slice(0, count);
   }
   
-  const shuffled = [...bingoOptions].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  const shuffled = [...bingoOptions].map(option => option.replace(/'/g, "\\'"));
+  return shuffled.sort(() => Math.random() - 0.5).slice(0, count);
 }
 
 // Function to get random bingo options from a static list
@@ -113,10 +113,13 @@ function getRandomBingoOptions(count, seed) {
     "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
     "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
     "Lord Sugar makes a pun", "Team makes a loss", "Bitchy impersonation", "Stupid assumption",
-    "Wasted journey", "Team doesn't research", "Everyone interrupts", "Candidate answers phone in towel",
+    "Wasted journey", "Team doesn\\'t research", "Everyone interrupts", "Candidate answers phone in towel",
     "Boardroom betrayal", "Karen gives death stare", "Claude gets angry", "Lord Sugar mentions East End",
     "Double firing!", "Triple firing!", "Project Manager changes"
   ];
+  
+  // Make sure all options have escaped apostrophes for use in template strings
+  const safeOptions = options.map(option => option.replace(/'/g, "\\'"));
   
   // If seed is provided, use seeded random
   if (seed) {
@@ -139,7 +142,7 @@ function getRandomBingoOptions(count, seed) {
     const random = seededRandom(seed);
     
     // Shuffle using Fisher-Yates with seeded random
-    const shuffled = [...options];
+    const shuffled = [...safeOptions];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -149,7 +152,7 @@ function getRandomBingoOptions(count, seed) {
   }
   
   // Otherwise use regular shuffle
-  const shuffled = [...options].sort(() => 0.5 - Math.random());
+  const shuffled = [...safeOptions].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
 
