@@ -306,7 +306,16 @@ export const useGameStore = create(
             window.localStorage.removeItem('apprentice-bingo-storage');
           }
           
-          set({ ...initialState });
+          // Reset state with explicit resets for crucial UI state
+          set({ 
+            ...initialState,
+            // Important: Reset these values explicitly to ensure proper UI rendering
+            teamId: '',
+            teamName: '',
+            isSinglePlayer: false,
+            soloSetupMode: false,
+            isHost: true
+          });
           
           // Generate a fresh grid
           const options = getRandomBingoOptions(9);
@@ -320,10 +329,19 @@ export const useGameStore = create(
           }
           set({ grid });
           
-          // Force a refresh to clear the UI state
+          // Use history API instead of direct location change
           if (typeof window !== 'undefined') {
             console.log("Navigating to home page");
-            window.location.href = '/';
+            try {
+              window.history.pushState({}, '', '/');
+              window.dispatchEvent(new Event('popstate'));
+              // Dispatch a refresh event
+              window.dispatchEvent(new CustomEvent('game-reset-complete'));
+            } catch (error) {
+              console.error("Error using history API:", error);
+              // Fallback to direct navigation
+              window.location.href = '/';
+            }
           }
         } catch (error) {
           console.error("Error during game reset:", error);
@@ -1606,11 +1624,20 @@ export default function Home() {
         </h1>
         
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
-          {/* Left sidebar - Lord Sugar */}
+          {/* Left sidebar - Facts and Game Mode */}
           <div className="lg:col-span-3 order-2 lg:order-1">
+            {/* ApprenticeFacts Component */}
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden mb-4">
+              <div className="relative z-10">
+                <ApprenticeFacts />
+              </div>
+            </div>
+            
+            {/* Alan Sugar Animation */}
             <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
               <div className="relative z-10">
-                <motion.div className="mt-4 flex items-center justify-center">
+                <h3 className="text-xl font-bold text-center mb-4 text-amber-400">Lord Sugar</h3>
+                <motion.div className="flex items-center justify-center">
                   <AdvisorAnimation
                     type="lord-sugar"
                     size="large"
@@ -1661,11 +1688,6 @@ export default function Home() {
                     </p>
                   </div>
                 )}
-                
-                {/* Apprentice Facts Component */}
-                <div className="mt-6">
-                  <ApprenticeFacts />
-                </div>
               </div>
             </div>
           </div>
@@ -1710,6 +1732,127 @@ const filesToWrite = [
   { path: path.join(bingoComponentsDir, 'BingoGrid.tsx'), content: enhancedBingoGridContent },
   { path: path.join(bingoComponentsDir, 'BingoSquare.tsx'), content: bingoSquareContent },
   { path: path.join(bingoComponentsDir, 'GameProgress.tsx'), content: gameProgressContent },
+  { path: path.join(bingoComponentsDir, 'ApprenticeFacts.tsx'), content: `
+'use client';
+
+import * as React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSounds } from '@/lib/sounds';
+
+// Import the facts directly as we're in the vercel-build context
+const apprenticeFacts = [
+  "The UK version of The Apprentice started in 2005, two years after the US version.",
+  "The iconic boardroom used for filming is not Lord Sugar's real office – it's a set built specifically for the show.",
+  "The famous 'You're Fired' catchphrase was originally 'You're Dismissed' in early planning.",
+  "During filming, candidates typically work 18-hour days, 6 days a week.",
+  "Lord Sugar's receptionist Frances has been with the show since it started.",
+  "The dramatic 'walk of shame' with luggage was added in series 2 - candidates need to keep a packed suitcase ready at all times.",
+  "Nick Hewer worked with Lord Sugar for nearly 30 years before joining as his advisor on the show.",
+  "Margaret Mountford left her role as an advisor to complete her PhD in Papyrology.",
+  "Karen Brady is actually a Conservative Party life peer in the House of Lords.",
+  "Lord Sugar doesn't keep the £250,000 investment money in a briefcase as shown in the opening credits.",
+  "Tim Campbell, who won the first series, later received an MBE for services to enterprise culture.",
+  "Candidates don't immediately go home after being fired - they're kept in a separate house to maintain secrecy.",
+  "The famous black cab that takes fired candidates away often drives around the block and drops them back at the hotel.",
+  "The early morning wake-up calls shown on camera are real, with production calling candidates as early as 4 AM.",
+  "In the first series, the prize was a £100,000 job working for Lord Sugar. This changed to a business investment in later series."
+];
+
+export function ApprenticeFacts() {
+  const [factIndex, setFactIndex] = React.useState(0);
+  const [progress, setProgress] = React.useState(100);
+  const { playClick, playNotification } = useSounds();
+  
+  // Generate a random fact that hasn't been shown recently
+  const getRandomFact = React.useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * apprenticeFacts.length);
+    setFactIndex(randomIndex);
+    playNotification?.();
+  }, [playNotification]);
+
+  // Set up the timer for fact rotation
+  React.useEffect(() => {
+    // Set initial fact
+    getRandomFact();
+
+    // Reset progress when fact changes
+    setProgress(100);
+    
+    // Set up a timer that updates every second
+    const timerInterval = setInterval(() => {
+      setProgress(prev => {
+        // Decrease by 1.67 to complete in 60 seconds
+        const newProgress = prev - 1.67;
+        if (newProgress <= 0) {
+          getRandomFact();
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [getRandomFact]);
+
+  return (
+    <Card className="overflow-hidden relative bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl border-amber-800/30">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_500px_at_50%_40%,#3b3b3b,transparent)]"></div>
+      
+      <CardHeader className="relative z-10 border-b border-gray-800 bg-gray-900/50">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <span className="text-amber-500">🎬</span> 
+            <span className="text-white">Apprentice Facts</span>
+          </CardTitle>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="h-1 w-full bg-gray-800 mt-2 rounded-full overflow-hidden">
+          <motion.div 
+            className="h-full bg-amber-500"
+            style={{ width: \`\${progress}%\` }}
+            transition={{ ease: "linear" }}
+          />
+        </div>
+      </CardHeader>
+      
+      <CardContent className="relative z-10 p-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={factIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-start gap-2"
+          >
+            <div className="text-2xl text-amber-500 opacity-70">"</div>
+            <p className="text-gray-200 italic leading-relaxed min-h-[3rem] text-sm">
+              {apprenticeFacts[factIndex]}
+            </p>
+            <div className="text-2xl text-amber-500 opacity-70 self-end">"</div>
+          </motion.div>
+        </AnimatePresence>
+        
+        {/* Static Fact controls */}
+        <div className="flex justify-center mt-3">
+          <button 
+            className="bg-gray-800/70 hover:bg-gray-700/70 border border-amber-800/30 text-amber-300 hover:text-amber-200 px-3 py-1 rounded text-sm"
+            onClick={() => {
+              playClick?.();
+              getRandomFact();
+            }}
+          >
+            New Fact
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+` },
   { path: path.join(__dirname, 'src', 'app', 'page.tsx'), content: simpleAppPageContent }
 ];
 
