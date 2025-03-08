@@ -42,26 +42,7 @@ export function TeamSelector() {
     if (teamName.trim()) {
       if (soloSetupMode) {
         // Start solo game with the selected name and advisor
-        const teamId = `team-${Date.now()}`;
-        
-        // First initialize the game to generate the board
-        initSinglePlayerMode();
-        
-        // Then update team info
-        useGameStore.setState({
-          teamName,
-          teamAdvisor: advisor,
-          soloSetupMode: false,
-          teams: [{
-            id: teamId,
-            name: teamName,
-            advisor,
-            markedSquares: [],
-            wins: [],
-            createdAt: new Date().toISOString(),
-            userId: 'single-player'
-          }]
-        });
+        initSinglePlayerMode(teamName, advisor);
       } else {
         // For multiplayer, continue with the game as before
         initGame(
@@ -177,52 +158,55 @@ export function TeamSelector() {
         </CardContent>
       </Card>
 
-      <Card className="w-full overflow-hidden relative bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl border-amber-800/30">
-        <CardHeader className="relative z-10 border-b border-gray-800">
-          <CardTitle className="text-2xl flex items-center">
-            <span className="text-amber-500 mr-2">⏳</span> Waiting Room
-          </CardTitle>
-          <p className="text-sm text-gray-400">
-            Game Code: <span className="font-mono font-bold">{gameId}</span>
-          </p>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium mb-2">Players in lobby ({teams.length})</h3>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {teams.map((team) => (
-                <div 
-                  key={team.id} 
-                  className="flex items-center justify-between p-2 bg-gray-800 rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="font-medium">{team.name || "Unnamed Team"}</span>
+      {/* Waiting Room - Remove for single player mode */}
+      {!soloSetupMode && (
+        <Card className="w-full overflow-hidden relative bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl border-amber-800/30">
+          <CardHeader className="relative z-10 border-b border-gray-800">
+            <CardTitle className="text-2xl flex items-center">
+              <span className="text-amber-500 mr-2">⏳</span> Waiting Room
+            </CardTitle>
+            <p className="text-sm text-gray-400">
+              Game Code: <span className="font-mono font-bold">{gameId}</span>
+            </p>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium mb-2">Players in lobby ({teams.length})</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {teams.map((team) => (
+                  <div 
+                    key={team.id} 
+                    className="flex items-center justify-between p-2 bg-gray-800 rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="font-medium">{team.name || "Unnamed Team"}</span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {team.advisor === 'karen' ? 'Karen Brady' : 
+                       team.advisor === 'tim' ? 'Tim Campbell' : 
+                       team.advisor === 'claude' ? 'Claude' : 
+                       team.advisor === 'nick' ? 'Nick' : 'Margaret'}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {team.advisor === 'karen' ? 'Karen Brady' : 
-                     team.advisor === 'tim' ? 'Tim Campbell' : 
-                     team.advisor === 'claude' ? 'Claude' : 
-                     team.advisor === 'nick' ? 'Nick' : 'Margaret'}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {isHost && (
-              <div className="mt-4 text-center">
-                <p className="text-sm mb-2">You are the host. Start when all players have joined.</p>
-                <Button 
-                  className="w-full bg-green-600 hover:bg-green-700" 
-                  disabled={!teamName.trim()}
-                  onClick={handleCreateTeam}
-                >
-                  Start Game ({teams.length} players)
-                </Button>
+                ))}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {isHost && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm mb-2">You are the host. Start when all players have joined.</p>
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700" 
+                    disabled={!teamName.trim()}
+                    onClick={handleCreateTeam}
+                  >
+                    Start Game ({teams.length} players)
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 } 

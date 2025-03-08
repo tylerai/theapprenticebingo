@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/lib/store/game-store';
 
 interface AdvisorAnimationProps {
@@ -86,8 +86,6 @@ export function AdvisorAnimation({
   const markedSquares = useGameStore(state => state.markedSquares as [number, number][]);
   const [currentGif, setCurrentGif] = React.useState<string>('');
   const [lastInteractionTime, setLastInteractionTime] = React.useState<number>(Date.now());
-  const [isTransitioning, setIsTransitioning] = React.useState<boolean>(false);
-  const [nextGif, setNextGif] = React.useState<string>('');
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
   
   // Map advisors to their GIFs and static images
@@ -125,17 +123,10 @@ export function AdvisorAnimation({
     'game_over': '/videos/alan-sugar-gif-2.webm', // Changed from gif-6 since it was problematic
   };
 
-  // Function to handle GIF changes with transition
+  // Function to handle GIF changes with smooth transition
   const changeGif = (newGif: string) => {
     if (newGif === currentGif) return;
-    
-    setIsTransitioning(true);
-    setNextGif(newGif);
-    
-    setTimeout(() => {
-      setCurrentGif(newGif);
-      setIsTransitioning(false);
-    }, 500); // 500ms for fade transition
+    setCurrentGif(newGif);
   };
   
   React.useEffect(() => {
@@ -276,110 +267,81 @@ export function AdvisorAnimation({
   const { width, height } = getDimensions();
   
   // Fallback handling for file not found
-  const [imgSrc, setImgSrc] = React.useState<string>(getGifSource());
   const handleError = () => {
     // If image fails to load, try using a static fallback
     if (type === 'advisor') {
       const currentAdvisor = advisor || variant;
       const staticImage = ADVISOR_GIFS[currentAdvisor as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg';
-      setImgSrc(staticImage);
+      setCurrentGif(staticImage);
     } else {
-      setImgSrc('/images/alansugar.jpg');
+      setCurrentGif('/images/alansugar.jpg');
+    }
+  };
+
+  // Render the current media with smooth transitions
+  const renderMedia = (src: string, key: string) => {
+    if (src.endsWith('.webm')) {
+      return (
+        <motion.div
+          key={key}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="rounded-lg overflow-hidden bg-black absolute inset-0"
+          style={{ width, height }}
+        >
+          <video
+            src={src}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            onError={handleError}
+          />
+        </motion.div>
+      );
+    } else {
+      return (
+        <motion.div
+          key={key}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className={`rounded-lg overflow-hidden absolute inset-0 ${type === 'advisor' ? 'rounded-full' : ''}`}
+          style={{ width, height }}
+        >
+          <div className="w-full h-full relative">
+            <Image
+              src={src}
+              alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
+              fill
+              className="object-cover object-center"
+              onError={handleError}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority
+            />
+          </div>
+        </motion.div>
+      );
     }
   };
   
-  React.useEffect(() => {
-    setImgSrc(getGifSource());
-  }, [variant, type, currentGif, advisor]);
-  
-  // Original component rendering with fade transitions
+  // Improved component rendering with AnimatePresence for smooth transitions
   return (
-    <div className={className}>
-      <div className="relative">
-        {/* Current GIF */}
-        <div className={`transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-          {currentGif.endsWith('.webm') ? (
-            // Render WebM as video
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="rounded-lg overflow-hidden bg-black relative"
-              style={{ width, height }}
-            >
-              <video
-                src={currentGif}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-                onError={handleError}
-              />
-            </motion.div>
-          ) : (
-            // Render static image
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className={`rounded-lg overflow-hidden relative ${type === 'advisor' ? 'rounded-full' : ''}`}
-              style={{ width, height }}
-            >
-              <div className="w-full h-full relative">
-                <Image
-                  src={currentGif || (type === 'advisor' ? 
-                    (advisor ? getAdvisorImage(advisor) : ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg') : 
-                    '/images/alansugar.jpg')}
-                  alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
-                  fill
-                  className="object-cover object-center"
-                  onError={handleError}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority
-                />
-              </div>
-            </motion.div>
-          )}
-        </div>
-        
-        {/* Next GIF (for transition) */}
-        {isTransitioning && (
-          <div className="absolute top-0 left-0 right-0 bottom-0 transition-opacity duration-500 opacity-100">
-            {nextGif.endsWith('.webm') ? (
-              // Render WebM as video
-              <div
-                className="rounded-lg overflow-hidden bg-black relative"
-                style={{ width, height }}
-              >
-                <video
-                  src={nextGif}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                  onError={handleError}
-                />
-              </div>
-            ) : (
-              // Render static image
-              <div
-                className={`rounded-lg overflow-hidden relative ${type === 'advisor' ? 'rounded-full' : ''}`}
-                style={{ width, height }}
-              >
-                <div className="w-full h-full relative">
-                  <Image
-                    src={nextGif || '/images/alansugar.jpg'}
-                    alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
-                    fill
-                    className="object-cover object-center"
-                    onError={handleError}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    priority
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+    <div className={`relative ${className}`} style={{ width, height }}>
+      <AnimatePresence mode="sync">
+        {renderMedia(currentGif || getGifSource(), `gif-${currentGif}`)}
+      </AnimatePresence>
+      
+      {/* Optional hover effect */}
+      <motion.div
+        className="absolute inset-0 rounded-lg cursor-pointer"
+        whileHover={{ scale: 1.02 }}
+        transition={{ duration: 0.2 }}
+      />
     </div>
   );
 } 
