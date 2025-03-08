@@ -177,44 +177,59 @@ export function BingoGrid() {
     setRotateY(0);
   }, []);
 
-  // Check for wins when marked squares change
+  // Check for wins when marked squares change - completely rewritten for reliability
   React.useEffect(() => {
-    if (!grid.length) return;
+    if (!grid.length || markedSquares.length === 0) return;
 
-    // Use the updated checkForWins function that respects game modes
-    const wins = checkForWins(grid, markedSquares, gameMode, targetNumber);
+    console.log("Checking for wins with marked squares:", markedSquares);
     
-    // Add new wins that haven't been recorded yet
-    wins.forEach(win => {
-      const isNewWin = !previousWins.some(prev => prev.type === win.type);
-      if (isNewWin) {
+    // Get all possible wins regardless of previous state
+    const wins = checkForWins(grid, markedSquares, gameMode, targetNumber);
+    console.log("Detected wins:", wins);
+    console.log("Previous wins:", previousWins);
+    
+    // Check if there are any wins that weren't previously recorded
+    const newWins = wins.filter(win => 
+      !previousWins.some(prevWin => prevWin.type === win.type)
+    );
+    
+    if (newWins.length > 0) {
+      console.log("New wins detected!", newWins);
+      
+      // Process each new win
+      newWins.forEach(win => {
+        console.log("Adding win:", win.type);
         addWin(win);
-        // Save the latest win for animation
-        setLastWin(win);
+      });
+      
+      // Get the most significant win (prefer full house over others)
+      const mostSignificantWin = newWins.find(win => win.type === 'full_house') || newWins[0];
+      
+      // Set the win for display
+      setLastWin(mostSignificantWin);
+      
+      // Force the win message to show - this is critical
+      setTimeout(() => {
+        console.log("FORCING WIN MESSAGE TO SHOW");
+        setShowWinMessage(true);
         
-        // Animate the grid
-        gridAnimControls.start({
-          scale: [1, 1.05, 1],
-          transition: { duration: 0.7 }
-        });
-        
-        // Show winning animation for any win (not just full house)
-        setTimeout(() => {
-          setShowWinningAnimation(true);
-        }, 500);
-        
-        // Play appropriate sound
-        if (win.type === 'full_house') {
+        // Play appropriate sound effect
+        if (mostSignificantWin.type === 'full_house') {
           playBingo();
         } else {
           playSuccess();
         }
         
-        // Fire confetti for the win
-        fireConfetti(win.type === 'full_house');
-      }
-    });
-  }, [markedSquares, grid, gameMode, targetNumber, addWin, previousWins, gridAnimControls, playBingo, playSuccess]);
+        // Show win animation after a slight delay
+        setTimeout(() => {
+          setShowWinningAnimation(true);
+        }, 200);
+        
+        // Fire confetti effect
+        fireConfetti(mostSignificantWin.type === 'full_house');
+      }, 100);
+    }
+  }, [markedSquares, grid, gameMode, targetNumber, addWin, previousWins, playBingo, playSuccess]);
 
   // Reset any win-related state when the grid changes
   React.useEffect(() => {
@@ -286,11 +301,6 @@ export function BingoGrid() {
           const isWinning = lastWin && lastWin.squares ? 
             lastWin.squares.some(([r, c]) => r === row && c === col) : 
             false;
-          
-          // Debug log for each square's state
-          React.useEffect(() => {
-            console.log(`Grid rendering square ${row},${col}: isSelected=${isSelected}, content=${content}`);
-          }, [row, col, isSelected, content]);
           
           return (
             <motion.div

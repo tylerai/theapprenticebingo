@@ -66,16 +66,8 @@ export function AdvisorAnimation({
     return (
       <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg ${className}`}>
         <motion.div
-          initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
-          animate={animate ? { 
-            scale: [0.9, 1, 0.9],
-            y: [10, 0, 10]
-          } : { scale: 1 }}
-          transition={{ 
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
+          initial={{ scale: 1 }}
+          animate={{ scale: 1 }}
           className="relative w-full h-full flex items-center justify-center"
         >
           <div className="overflow-hidden rounded-full w-full h-full relative">
@@ -95,6 +87,8 @@ export function AdvisorAnimation({
 
   const { teamAdvisor, wins, markedSquares } = useGameStore();
   const [currentGif, setCurrentGif] = React.useState<string>('');
+  const [lastInteractionTime, setLastInteractionTime] = React.useState<number>(Date.now());
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
   
   // Map advisors to their GIFs and static images
   const ADVISOR_GIFS = {
@@ -124,7 +118,7 @@ export function AdvisorAnimation({
     '/videos/alan-sugar-gif-5.webm',
   ];
   
-  // Special states
+  // Lord Sugar Videos only (for forceVideo parameter)
   const LORD_SUGAR_SPECIAL_STATES = {
     'first_win': '/videos/alan-sugar-gif-3.webm',
     'multiple_wins': '/videos/alan-sugar-gif-5.webm',
@@ -175,6 +169,41 @@ export function AdvisorAnimation({
       }
     }
   }, [type, wins.length]);
+  
+  // Set up one-minute timer for cycling Lord Sugar GIFs when no interaction
+  React.useEffect(() => {
+    if (type === 'lord-sugar') {
+      // Update the last interaction time when squares are marked
+      setLastInteractionTime(Date.now());
+      
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      
+      // Set up a new timer to check for inactivity and cycle GIFs
+      timerRef.current = setInterval(() => {
+        const currentTime = Date.now();
+        // If no interaction for a minute, cycle to next GIF
+        if (currentTime - lastInteractionTime >= 60000) {
+          const currentIndex = LORD_SUGAR_GIFS.indexOf(currentGif);
+          const nextIndex = (currentIndex + 1) % LORD_SUGAR_GIFS.length;
+          const newGif = LORD_SUGAR_GIFS[nextIndex];
+          
+          setImgSrc(newGif);
+          setCurrentGif(newGif);
+          setLastInteractionTime(currentTime); // Reset the timer
+        }
+      }, 60000);
+      
+      // Cleanup interval on unmount
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+      };
+    }
+  }, [type, markedSquares.length, currentGif, lastInteractionTime]);
   
   // Determine which GIF to show
   const getGifSource = (): string => {

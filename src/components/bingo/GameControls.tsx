@@ -72,11 +72,12 @@ export function GameControls() {
           {/* Reset marks button - available to all */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
-              variant="outline" 
+              variant="default" 
               onClick={handleResetMarks}
-              className="w-full bg-amber-600/90 hover:bg-amber-700 text-white border-amber-700/50 flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
+              style={{ backgroundColor: 'black', color: 'white' }}
+              className="w-full hover:bg-gray-800 text-white border-gray-700 flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
             >
-              <FiRefreshCw className="text-amber-200" />
+              <FiRefreshCw className="text-white" />
               <span>Reset Marks</span>
             </Button>
           </motion.div>

@@ -320,6 +320,37 @@ export default function Home() {
                 <div className="relative z-10 flex flex-col">
                   <Leaderboard />
                   
+                  {/* Add a dedicated section for user's latest clicks and wins */}
+                  {showMainGame && currentTeam && (
+                    <motion.div 
+                      className="mt-6 bg-gray-900/50 p-4 rounded-lg border border-amber-800/30"
+                      variants={fadeIn}
+                    >
+                      <h3 className="text-center text-white font-semibold mb-3">Your Progress</h3>
+                      
+                      {/* Show marked squares count */}
+                      <div className="mb-3">
+                        <h4 className="text-sm text-amber-200 mb-1">Squares Marked:</h4>
+                        <div className="text-center text-2xl font-bold text-white">
+                          {currentTeam.markedSquares.length}
+                          <span className="text-xs text-gray-400 ml-2">/ 9</span>
+                        </div>
+                      </div>
+                      
+                      {/* Show wins */}
+                      <div>
+                        <h4 className="text-sm text-amber-200 mb-1">Your Wins:</h4>
+                        {currentTeam.wins.length > 0 ? (
+                          <WinsList wins={currentTeam.wins} />
+                        ) : (
+                          <div className="text-center text-sm text-gray-400 py-2">
+                            No wins yet. Keep marking squares!
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                  
                   {showMainGame && teamAdvisor && (
                     <motion.div 
                       className="mt-6"

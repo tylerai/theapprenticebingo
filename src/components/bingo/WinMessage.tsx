@@ -12,18 +12,29 @@ interface WinMessageProps {
 
 export function WinMessage({ show, onComplete }: WinMessageProps) {
   const { playSuccess } = useSounds();
+  const [isVisible, setIsVisible] = React.useState(false);
   
+  // Use a combination of props and local state for better reliability
   React.useEffect(() => {
     if (show) {
+      setIsVisible(true);
       playSuccess();
+      console.log("WIN MESSAGE SHOWING!");
     }
   }, [show, playSuccess]);
   
+  const handleComplete = () => {
+    setIsVisible(false);
+    if (onComplete) {
+      onComplete();
+    }
+  };
+  
   return (
-    <AnimatePresence onExitComplete={onComplete}>
-      {show && (
+    <AnimatePresence onExitComplete={handleComplete}>
+      {(show || isVisible) && (
         <motion.div 
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -34,11 +45,11 @@ export function WinMessage({ show, onComplete }: WinMessageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onComplete}
+            onClick={handleComplete}
           />
           
           <motion.div
-            className="relative z-10 flex flex-col items-center"
+            className="relative z-10 flex flex-col items-center bg-gray-900/80 p-8 rounded-xl shadow-2xl"
             initial={{ scale: 0.8, y: 50 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.8, y: 50 }}
@@ -59,6 +70,7 @@ export function WinMessage({ show, onComplete }: WinMessageProps) {
                 width={400} 
                 height={300}
                 className="rounded-lg shadow-xl border-4 border-amber-600"
+                priority
               />
             </motion.div>
             
@@ -78,8 +90,8 @@ export function WinMessage({ show, onComplete }: WinMessageProps) {
               transition={{ delay: 1, duration: 0.5 }}
             >
               <button
-                onClick={onComplete}
-                className="px-8 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors"
+                onClick={handleComplete}
+                className="px-8 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors text-xl"
               >
                 Continue
               </button>

@@ -14,7 +14,7 @@ import Image from "next/image";
 
 export function GameModeSelect() {
   const initSinglePlayerMode = useGameStore(state => state.initSinglePlayerMode);
-  const initQuickGameMode = useGameStore(state => state.initQuickGameMode);
+  const initQuickGame = useGameStore(state => state.initQuickGame);
   const prepareSoloMode = useGameStore(state => state.prepareSoloMode);
   const { playClick } = useSounds();
 
@@ -25,7 +25,7 @@ export function GameModeSelect() {
 
   const handleQuickGameMode = () => {
     playClick();
-    initQuickGameMode();
+    initQuickGame();
   };
 
   return (
@@ -47,7 +47,7 @@ export function GameModeSelect() {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 container max-w-6xl mx-auto px-4 py-12">
+      <div className="relative z-10 container max-w-6xl mx-auto px-4 py-6">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -55,12 +55,12 @@ export function GameModeSelect() {
         >
           {/* Hero Section */}
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-8"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="relative inline-block mb-6">
+            <div className="relative inline-block mb-4">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 via-amber-400/20 to-amber-600/20 blur-xl rounded-full" />
               <motion.div 
                 className="relative z-10 flex items-center justify-center w-24 h-24 mx-auto bg-gradient-to-br from-amber-500 to-amber-700 rounded-full shadow-lg mb-2"
@@ -73,7 +73,7 @@ export function GameModeSelect() {
               </motion.div>
             </div>
             
-            <p className="text-xl text-white/70 max-w-2xl mx-auto mb-6">
+            <p className="text-xl text-white/70 max-w-2xl mx-auto mb-4">
               Play along with your favorite business reality show! Mark events as they happen and win with style.
             </p>
             
@@ -94,7 +94,7 @@ export function GameModeSelect() {
           </motion.div>
 
           {/* Game Mode Cards */}
-          <div className="flex flex-col gap-4 max-w-xl w-full mb-16">
+          <div className="flex flex-col gap-4 max-w-xl w-full mb-10">
             {/* Quick Game Card */}
             <motion.div
               className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-amber-700/20 to-amber-950/80 border border-amber-700/30 relative group"
