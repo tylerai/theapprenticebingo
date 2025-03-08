@@ -86,6 +86,8 @@ export function AdvisorAnimation({
   const markedSquares = useGameStore(state => state.markedSquares as [number, number][]);
   const [currentGif, setCurrentGif] = React.useState<string>('');
   const [lastInteractionTime, setLastInteractionTime] = React.useState<number>(Date.now());
+  const [isTransitioning, setIsTransitioning] = React.useState<boolean>(false);
+  const [nextGif, setNextGif] = React.useState<string>('');
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
   
   // Map advisors to their GIFs and static images
@@ -122,6 +124,19 @@ export function AdvisorAnimation({
     'multiple_wins': '/videos/alan-sugar-gif-5.webm',
     'game_over': '/videos/alan-sugar-gif-2.webm', // Changed from gif-6 since it was problematic
   };
+
+  // Function to handle GIF changes with transition
+  const changeGif = (newGif: string) => {
+    if (newGif === currentGif) return;
+    
+    setIsTransitioning(true);
+    setNextGif(newGif);
+    
+    setTimeout(() => {
+      setCurrentGif(newGif);
+      setIsTransitioning(false);
+    }, 500); // 500ms for fade transition
+  };
   
   React.useEffect(() => {
     if (type === 'lord-sugar') {
@@ -133,9 +148,8 @@ export function AdvisorAnimation({
       const gifIndex = markedSquares.length % LORD_SUGAR_GIFS.length;
       const newGif = LORD_SUGAR_GIFS[gifIndex];
       
-      // Set the GIF immediately
-      setImgSrc(newGif);
-      setCurrentGif(newGif);
+      // Set the GIF with transition
+      changeGif(newGif);
     }
   }, [type, markedSquares.length]);
   
@@ -153,14 +167,12 @@ export function AdvisorAnimation({
       }
       
       if (winGif) {
-        setImgSrc(winGif);
-        setCurrentGif(winGif);
+        changeGif(winGif);
         
         // After showing the win animation, revert to cycling based on marked squares
         const timeout = setTimeout(() => {
           const gifIndex = markedSquares.length % LORD_SUGAR_GIFS.length;
-          setImgSrc(LORD_SUGAR_GIFS[gifIndex]);
-          setCurrentGif(LORD_SUGAR_GIFS[gifIndex]);
+          changeGif(LORD_SUGAR_GIFS[gifIndex]);
         }, 3000);
         
         return () => clearTimeout(timeout);
@@ -188,8 +200,7 @@ export function AdvisorAnimation({
           const nextIndex = (currentIndex + 1) % LORD_SUGAR_GIFS.length;
           const newGif = LORD_SUGAR_GIFS[nextIndex];
           
-          setImgSrc(newGif);
-          setCurrentGif(newGif);
+          changeGif(newGif);
           setLastInteractionTime(currentTime); // Reset the timer
         }
       }, 60000);
@@ -243,6 +254,13 @@ export function AdvisorAnimation({
     }
   };
   
+  // Initialize the current gif if it's not set
+  React.useEffect(() => {
+    if (!currentGif) {
+      setCurrentGif(getGifSource());
+    }
+  }, []);
+  
   // Determine dimensions based on size
   const getDimensions = () => {
     switch (size) {
@@ -274,48 +292,94 @@ export function AdvisorAnimation({
     setImgSrc(getGifSource());
   }, [variant, type, currentGif, advisor]);
   
-  // Original component rendering
+  // Original component rendering with fade transitions
   return (
     <div className={className}>
-      {imgSrc.endsWith('.webm') ? (
-        // Render WebM as video
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="rounded-lg overflow-hidden bg-black relative"
-          style={{ width, height }}
-        >
-          <video
-            src={imgSrc}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            onError={handleError}
-          />
-        </motion.div>
-      ) : (
-        // Render static image
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className={`rounded-lg overflow-hidden relative ${type === 'advisor' ? 'rounded-full' : ''}`}
-          style={{ width, height }}
-        >
-          <div className="w-full h-full relative">
-            <Image
-              src={type === 'advisor' ? 
-                (advisor ? getAdvisorImage(advisor) : ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg') : 
-                '/images/alansugar.jpg'}
-              alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
-              fill
-              className="object-cover object-center"
-              onError={handleError}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority
-            />
+      <div className="relative">
+        {/* Current GIF */}
+        <div className={`transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+          {currentGif.endsWith('.webm') ? (
+            // Render WebM as video
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="rounded-lg overflow-hidden bg-black relative"
+              style={{ width, height }}
+            >
+              <video
+                src={currentGif}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+                onError={handleError}
+              />
+            </motion.div>
+          ) : (
+            // Render static image
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className={`rounded-lg overflow-hidden relative ${type === 'advisor' ? 'rounded-full' : ''}`}
+              style={{ width, height }}
+            >
+              <div className="w-full h-full relative">
+                <Image
+                  src={currentGif || (type === 'advisor' ? 
+                    (advisor ? getAdvisorImage(advisor) : ADVISOR_GIFS[variant as keyof typeof ADVISOR_GIFS]?.[1] || '/images/alansugar.jpg') : 
+                    '/images/alansugar.jpg')}
+                  alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
+                  fill
+                  className="object-cover object-center"
+                  onError={handleError}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority
+                />
+              </div>
+            </motion.div>
+          )}
+        </div>
+        
+        {/* Next GIF (for transition) */}
+        {isTransitioning && (
+          <div className="absolute top-0 left-0 right-0 bottom-0 transition-opacity duration-500 opacity-100">
+            {nextGif.endsWith('.webm') ? (
+              // Render WebM as video
+              <div
+                className="rounded-lg overflow-hidden bg-black relative"
+                style={{ width, height }}
+              >
+                <video
+                  src={nextGif}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  onError={handleError}
+                />
+              </div>
+            ) : (
+              // Render static image
+              <div
+                className={`rounded-lg overflow-hidden relative ${type === 'advisor' ? 'rounded-full' : ''}`}
+                style={{ width, height }}
+              >
+                <div className="w-full h-full relative">
+                  <Image
+                    src={nextGif || '/images/alansugar.jpg'}
+                    alt={type === 'lord-sugar' ? "Lord Sugar" : `Advisor ${advisor || variant}`}
+                    fill
+                    className="object-cover object-center"
+                    onError={handleError}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        </motion.div>
-      )}
+        )}
+      </div>
     </div>
   );
 } 

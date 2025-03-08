@@ -15,6 +15,7 @@ import { useSounds } from "@/lib/sounds";
 import { fadeIn, slideInFromBottom, slideInFromLeft, slideInFromRight, staggerChildren, boardroomBackground } from "@/lib/animations";
 import { AdvisorAnimation } from "@/components/bingo/AdvisorAnimation";
 import { WinsList } from "@/components/bingo/WinsList";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 // Helper function to format advisor name for display
 function formatAdvisor(advisor: 'karen' | 'tim' | 'claude' | 'nick' | 'margaret' | null): string {
@@ -105,9 +106,9 @@ export default function Home() {
         variants={staggerChildren}
       >
         <ParallaxBackground src="/images/theapprenticescreen.jpeg" opacity={0.4}>
-          <div className="h-40 sm:h-60 md:h-80 flex items-center justify-center bg-black/40">
+          <div className="h-24 sm:h-32 md:h-40 flex items-center justify-center bg-black/40">
             <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center drop-shadow-lg px-4"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-center drop-shadow-lg px-2"
               variants={slideInFromBottom}
             >
               <motion.span 
@@ -128,10 +129,10 @@ export default function Home() {
           </div>
         </ParallaxBackground>
         
-        <div className="container mx-auto px-4 py-6 md:py-12 flex-1 relative">
+        <div className="container mx-auto px-2 py-4 md:py-6 flex-1 relative">
           <div className="max-w-2xl mx-auto">
             <motion.div 
-              className="bg-gradient-to-b from-gray-800 to-gray-900 p-4 sm:p-8 rounded-lg shadow-2xl border border-gray-700 relative overflow-hidden"
+              className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-4 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
               variants={fadeIn}
             >
               {/* Subtle boardroom pattern */}
@@ -210,9 +211,9 @@ export default function Home() {
         key="main-game"
       >
         <ParallaxBackground src="/images/alansugar.jpg" opacity={0.7} overlay={true}>
-          <div className="h-40 sm:h-48 md:h-56 flex items-center justify-center">
+          <div className="h-24 sm:h-28 md:h-32 flex items-center justify-center">
             <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center drop-shadow-lg px-4"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-center drop-shadow-lg px-4"
               variants={slideInFromBottom}
             >
               <motion.span 
@@ -238,16 +239,16 @@ export default function Home() {
           </div>
         </ParallaxBackground>
         
-        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
-            {/* Left sidebar - Game mode selection */}
+        <div className="container mx-auto px-2 py-2 sm:py-3">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-3 lg:gap-4">
+            {/* Left sidebar - Game mode selection and Facts */}
             <motion.div 
               className="lg:col-span-3 order-2 lg:order-1"
               variants={slideInFromLeft}
               custom={1}
             >
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-2 sm:p-3 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden mb-3"
                 whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -255,31 +256,79 @@ export default function Home() {
                 <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
                 
                 <motion.div className="relative z-10">
-                  {isHost && <GameModeSelector />}
+                  {/* Apprentice Facts Component - Moved from right sidebar */}
                   <motion.div 
-                    className="mt-4 flex items-center justify-center"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                    variants={slideInFromBottom}
+                    custom={2}
                   >
-                    <AdvisorAnimation
-                      type="lord-sugar"
-                      size="large"
-                      className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
-                      forceVideo={true}
-                    />
+                    <ApprenticeFacts />
                   </motion.div>
                 </motion.div>
               </motion.div>
+
+              {isHost && (
+                <motion.div 
+                  className="bg-gradient-to-b from-gray-800 to-gray-900 p-2 sm:p-3 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                  whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Subtle boardroom pattern */}
+                  <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5 pointer-events-none"></div>
+                  
+                  <motion.div className="relative z-10">
+                    {/* Game Mode with Alan Sugar animation */}
+                    <div className="bg-white rounded-lg overflow-hidden shadow-md">
+                      <div className="p-3">
+                        <h3 className="text-black text-lg font-semibold mb-2">Game Mode</h3>
+                        <p className="text-gray-600 text-sm mb-4">
+                          Select how players can win the game
+                        </p>
+                        
+                        <GameModeSelector />
+                        
+                        {/* Alan Sugar animation inside the white section */}
+                        <motion.div 
+                          className="mt-4 flex items-center justify-center"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                        >
+                          <AdvisorAnimation
+                            type="lord-sugar"
+                            size="medium"
+                            className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
+                            forceVideo={true}
+                          />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {!isHost && (
+                <motion.div 
+                  className="mt-3 flex items-center justify-center"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                >
+                  <AdvisorAnimation
+                    type="lord-sugar"
+                    size="medium"
+                    className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
+                    forceVideo={true}
+                  />
+                </motion.div>
+              )}
             </motion.div>
 
             {/* Main content - Bingo grid and controls */}
             <motion.div 
-              className="lg:col-span-6 space-y-4 sm:space-y-6 order-1 lg:order-2"
+              className="lg:col-span-6 space-y-2 sm:space-y-3 order-1 lg:order-2"
               variants={fadeIn}
               custom={0}
             >
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-2 sm:p-3 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
                 whileHover={{ y: -3, boxShadow: "0 20px 30px rgba(0, 0, 0, 0.3)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -291,7 +340,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-2 sm:p-3 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden"
                 whileHover={{ y: -3, boxShadow: "0 20px 30px rgba(0, 0, 0, 0.3)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -310,7 +359,7 @@ export default function Home() {
               custom={1}
             >
               <motion.div 
-                className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden"
+                className="bg-gradient-to-b from-gray-800 to-gray-900 p-2 sm:p-3 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden"
                 whileHover={{ boxShadow: "0 0 25px rgba(245, 158, 11, 0.15)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -323,15 +372,15 @@ export default function Home() {
                   {/* Add a dedicated section for user's latest clicks and wins */}
                   {showMainGame && currentTeam && (
                     <motion.div 
-                      className="mt-6 bg-gray-900/50 p-4 rounded-lg border border-amber-800/30"
+                      className="mt-3 bg-gray-900/50 p-2 rounded-lg border border-amber-800/30"
                       variants={fadeIn}
                     >
-                      <h3 className="text-center text-white font-semibold mb-3">Your Progress</h3>
+                      <h3 className="text-center text-white font-semibold mb-2 text-sm">Your Progress</h3>
                       
                       {/* Show marked squares count */}
-                      <div className="mb-3">
-                        <h4 className="text-sm text-amber-200 mb-1">Squares Marked:</h4>
-                        <div className="text-center text-2xl font-bold text-white">
+                      <div className="mb-2">
+                        <h4 className="text-xs text-amber-200 mb-1">Squares Marked:</h4>
+                        <div className="text-center text-xl font-bold text-white">
                           {currentTeam.markedSquares.length}
                           <span className="text-xs text-gray-400 ml-2">/ 9</span>
                         </div>
@@ -339,11 +388,11 @@ export default function Home() {
                       
                       {/* Show wins */}
                       <div>
-                        <h4 className="text-sm text-amber-200 mb-1">Your Wins:</h4>
+                        <h4 className="text-xs text-amber-200 mb-1">Your Wins:</h4>
                         {currentTeam.wins.length > 0 ? (
                           <WinsList wins={currentTeam.wins} />
                         ) : (
-                          <div className="text-center text-sm text-gray-400 py-2">
+                          <div className="text-center text-xs text-gray-400 py-1">
                             No wins yet. Keep marking squares!
                           </div>
                         )}
@@ -392,15 +441,6 @@ export default function Home() {
                       )}
                     </motion.div>
                   )}
-                  
-                  {/* Apprentice Facts Component */}
-                  <motion.div 
-                    className="mt-6"
-                    variants={slideInFromBottom}
-                    custom={2}
-                  >
-                    <ApprenticeFacts />
-                  </motion.div>
                 </div>
               </motion.div>
             </motion.div>
