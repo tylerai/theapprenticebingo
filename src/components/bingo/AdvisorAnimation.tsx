@@ -58,18 +58,14 @@ export function AdvisorAnimation({
   size = 'medium',
   forceVideo = false,
   advisor,
-  animate = true
+  animate = false
 }: AdvisorAnimationProps) {
   // Simple compatibility mode for vercel-build.js implementation
   // If only advisor prop is provided (no explicit type prop), use the simplified rendering
   if (advisor && (!type || type === 'advisor')) {
     return (
       <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg ${className}`}>
-        <motion.div
-          initial={{ scale: 1 }}
-          animate={{ scale: 1 }}
-          className="relative w-full h-full flex items-center justify-center"
-        >
+        <div className="relative w-full h-full flex items-center justify-center">
           <div className="overflow-hidden rounded-full w-full h-full relative">
             <Image
               src={getAdvisorImage(advisor)}
@@ -80,12 +76,14 @@ export function AdvisorAnimation({
               priority
             />
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
-  const { teamAdvisor, wins, markedSquares } = useGameStore();
+  const teamAdvisor = useGameStore(state => state.teamAdvisor as string | null);
+  const wins = useGameStore(state => state.wins as any[]);
+  const markedSquares = useGameStore(state => state.markedSquares as [number, number][]);
   const [currentGif, setCurrentGif] = React.useState<string>('');
   const [lastInteractionTime, setLastInteractionTime] = React.useState<number>(Date.now());
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);

@@ -158,12 +158,31 @@ const gameStoreContent = `
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+// Generate random options for the initial grid
+function getInitialGridOptions() {
+  const options = [
+    "Disastrous pitch", "Epic negotiation fail", "Team gets lost", "Product epic fail",
+    "Candidate back-seat drives PM", "Arguing in public", "Overspends budget", "Bad attempt at foreign language",
+    "Bragging in taxi", "Blaming others", "PM is a pushover", "Candidate avoids responsibility",
+    "Candidate fights for discount", "Candidate gets emotional", "Candidate tries to outsmart",
+    "Lord Sugar makes a pun", "Team makes a loss", "Stupid assumption", 
+    "Wasted journey", "Everyone interrupts", "Candidate answers phone in towel", 
+    "Boardroom betrayal", "Karen gives death stare", "Claude gets angry"
+  ];
+  
+  const shuffled = [...options].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 9); // Get 9 random options
+}
+
+// Get options for the initial grid
+const initialGridOptions = getInitialGridOptions();
+
 // Initial state with actual bingo options
 const initialState = {
   grid: [
-    ['${getRandomOptions(9)[0]}', '${getRandomOptions(9)[1]}', '${getRandomOptions(9)[2]}'],
-    ['${getRandomOptions(9)[3]}', '${getRandomOptions(9)[4]}', '${getRandomOptions(9)[5]}'],
-    ['${getRandomOptions(9)[6]}', '${getRandomOptions(9)[7]}', '${getRandomOptions(9)[8]}']
+    [initialGridOptions[0], initialGridOptions[1], initialGridOptions[2]],
+    [initialGridOptions[3], initialGridOptions[4], initialGridOptions[5]],
+    [initialGridOptions[6], initialGridOptions[7], initialGridOptions[8]]
   ],
   markedSquares: [],
   teams: [],
@@ -507,15 +526,17 @@ export const useGameStore = create(
       regenerateCard: (seed) => {
         // Get options with seed if provided
         const options = getRandomBingoOptions(9, seed);
-        const grid = [
+        
+        // Create the grid data structure directly
+        const newGrid = [
           [options[0], options[1], options[2]],
-          [options[3], options[4], options[5]],
+          [options[3], options[4], options[5]], 
           [options[6], options[7], options[8]]
         ];
         
         // Reset marks and set the new grid
         set({ 
-          grid,
+          grid: newGrid,
           markedSquares: [],
           wins: [],
           previousWins: []
@@ -710,7 +731,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-export function AdvisorAnimation({ advisor, animate = true }) {
+export function AdvisorAnimation({ advisor, animate = false }) {
   if (!advisor) return null;
   
   const getAdvisorImage = () => {
@@ -749,19 +770,7 @@ export function AdvisorAnimation({ advisor, animate = true }) {
   
   return (
     <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-full border-4 border-amber-500 bg-gray-900 shadow-lg">
-      <motion.div
-        initial={animate ? { scale: 0.9, y: 10 } : { scale: 1 }}
-        animate={animate ? { 
-          scale: [0.9, 1, 0.9],
-          y: [10, 0, 10]
-        } : { scale: 1 }}
-        transition={{ 
-          duration: 3,
-          repeat: Infinity,
-          repeatType: "reverse"
-        }}
-        className="relative w-full h-full flex items-center justify-center"
-      >
+      <div className="relative w-full h-full flex items-center justify-center">
         <div className="overflow-hidden rounded-full w-full h-full relative">
           <Image
             src={getAdvisorImage()}
@@ -772,7 +781,7 @@ export function AdvisorAnimation({ advisor, animate = true }) {
             priority
           />
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -995,23 +1004,689 @@ export const boardroomBackground = {
 };
 `;
 
-// List of files to create
-const files = [
+// Create the WinLine component
+const winLineContent = `
+'use client';
+
+import * as React from 'react';
+import { motion } from 'framer-motion';
+
+export function WinLine({ win }) {
+  if (!win || !win.type || !win.squares || win.squares.length < 3) return null;
+
+  let lineProps = {};
+  
+  // Set line position based on win type
+  if (win.type.startsWith('row')) {
+    const row = parseInt(win.type.split('_')[1]);
+    lineProps = {
+      className: "absolute bg-amber-400 h-1 w-0 left-0 rounded-full opacity-80 shadow-glow-sm",
+      style: { top: \`calc(\${(row + 0.5) * 33.333}%)\` },
+      animate: { width: '100%' },
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else if (win.type.startsWith('col')) {
+    const col = parseInt(win.type.split('_')[1]);
+    lineProps = {
+      className: "absolute bg-amber-400 w-1 h-0 top-0 rounded-full opacity-80 shadow-glow-sm",
+      style: { left: \`calc(\${(col + 0.5) * 33.333}%)\` },
+      animate: { height: '100%' },
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else if (win.type === 'diag_1') {
+    // Top-left to bottom-right
+    lineProps = {
+      className: "absolute bg-amber-400 h-1 w-0 opacity-80 shadow-glow-sm origin-top-left",
+      style: { 
+        top: '0', 
+        left: '0',
+        transformOrigin: 'top left',
+        transform: 'rotate(45deg)',
+        width: '0%',
+      },
+      animate: { width: '142%' }, // √2 * 100% to cover diagonal
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else if (win.type === 'diag_2') {
+    // Top-right to bottom-left
+    lineProps = {
+      className: "absolute bg-amber-400 h-1 w-0 opacity-80 shadow-glow-sm origin-top-right",
+      style: {
+        top: '0',
+        right: '0',
+        transformOrigin: 'top right',
+        transform: 'rotate(-45deg)',
+        width: '0%',
+      },
+      animate: { width: '142%' }, // √2 * 100% to cover diagonal
+      transition: { duration: 0.8, ease: "easeOut" }
+    };
+  } else {
+    return null; // No line for full house or number wins
+  }
+
+  return <motion.div {...lineProps} />;
+}
+`;
+
+// Create the WinMessage component
+const winMessageContent = `
+'use client';
+
+import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy } from 'lucide-react';
+
+export function WinMessage({ show, onComplete, message = "You've completed a line!" }) {
+  React.useEffect(() => {
+    if (show) {
+      console.log('Showing win message with auto-dismiss');
+      const timer = setTimeout(() => {
+        if (onComplete) {
+          console.log('Auto-dismissing win message');
+          onComplete();
+        }
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [show, onComplete]);
+  
+  // For debugging
+  React.useEffect(() => {
+    console.log('WinMessage rendered with show =', show);
+  }, [show]);
+  
+  if (!show) return null;
+  
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.8, y: 20 }}
+        transition={{ duration: 0.4 }}
+        className="bg-gradient-to-br from-amber-600 to-amber-800 
+                   px-8 py-6 rounded-lg text-white text-center
+                   shadow-xl border-2 border-amber-400"
+      >
+        <Trophy className="w-16 h-16 text-amber-300 mx-auto mb-3" />
+        <h3 className="text-3xl font-bold mb-2">BINGO!</h3>
+        <p className="text-amber-200 text-lg">{message}</p>
+        <button 
+          onClick={onComplete}
+          className="mt-4 px-4 py-2 bg-amber-800 hover:bg-amber-700 rounded-lg font-medium text-sm"
+        >
+          Continue
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+`;
+
+// Create updated BingoGrid with enhanced win detection
+const enhancedBingoGridContent = `
+'use client';
+
+import * as React from 'react';
+import { useGameStore } from '@/lib/store/game-store';
+import { BingoSquare } from './BingoSquare';
+import { WinLine } from './WinLine';
+import { motion } from 'framer-motion';
+import { Trophy } from 'lucide-react';
+
+// Helper function to check for wins
+function checkForWins(grid, markedSquares, gameMode, targetNumber) {
+  const allPossibleWins = [];
+
+  // Helper function to check if a square is marked
+  const isMarked = (row, col) => {
+    return markedSquares.some(([r, c]) => r === row && c === col);
+  };
+
+  // Check rows
+  for (let i = 0; i < 3; i++) {
+    if (isMarked(i, 0) && isMarked(i, 1) && isMarked(i, 2)) {
+      allPossibleWins.push({
+        type: \`row_\${i}\`,
+        squares: [[i, 0], [i, 1], [i, 2]],
+        message: \`Row \${i + 1} complete!\`
+      });
+    }
+  }
+
+  // Check columns
+  for (let j = 0; j < 3; j++) {
+    if (isMarked(0, j) && isMarked(1, j) && isMarked(2, j)) {
+      allPossibleWins.push({
+        type: \`col_\${j}\`,
+        squares: [[0, j], [1, j], [2, j]],
+        message: \`Column \${j + 1} complete!\`
+      });
+    }
+  }
+
+  // Check diagonals
+  if (isMarked(0, 0) && isMarked(1, 1) && isMarked(2, 2)) {
+    allPossibleWins.push({
+      type: 'diag_1',
+      squares: [[0, 0], [1, 1], [2, 2]],
+      message: 'Diagonal (top-left to bottom-right) complete!'
+    });
+  }
+
+  if (isMarked(0, 2) && isMarked(1, 1) && isMarked(2, 0)) {
+    allPossibleWins.push({
+      type: 'diag_2',
+      squares: [[0, 2], [1, 1], [2, 0]],
+      message: 'Diagonal (top-right to bottom-left) complete!'
+    });
+  }
+
+  // Check full house
+  if (markedSquares.length === 9) {
+    const allSquares = [];
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        allSquares.push([i, j]);
+      }
+    }
+    allPossibleWins.push({
+      type: 'full_house',
+      squares: allSquares,
+      message: 'FULL HOUSE! All squares complete!'
+    });
+  }
+
+  // Filter wins based on game mode
+  let filteredWins = [];
+  
+  if (gameMode === 'line') {
+    // In line mode, allow all line wins (rows, columns, diagonals)
+    filteredWins = allPossibleWins.filter(win => 
+      win.type.startsWith('row_') || win.type.startsWith('col_') || win.type.startsWith('diag_')
+    );
+  } else if (gameMode === 'full_house') {
+    // In full house mode, only allow the full house win
+    filteredWins = allPossibleWins.filter(win => win.type === 'full_house');
+  } else if (gameMode === 'number') {
+    // In number mode, only allow number wins
+    if (markedSquares.length >= targetNumber) {
+      filteredWins = [{
+        type: \`number_\${targetNumber}\`,
+        squares: markedSquares.slice(0, targetNumber),
+        message: \`\${targetNumber} squares marked!\`
+      }];
+    }
+  }
+
+  return filteredWins;
+}
+
+export function BingoGrid() {
+  const grid = useGameStore(state => state.grid);
+  const markedSquares = useGameStore(state => state.markedSquares);
+  const gameMode = useGameStore(state => state.gameMode);
+  const targetNumber = useGameStore(state => state.targetNumber);
+  const addWin = useGameStore(state => state.addWin);
+  const previousWins = useGameStore(state => state.previousWins);
+  const [lastWin, setLastWin] = React.useState(null);
+  const [showWinMessage, setShowWinMessage] = React.useState(false);
+
+  // Debug flag for win detection
+  const [debug, setDebug] = React.useState({
+    winChecks: 0,
+    checkedAt: null,
+    lastWinFound: null
+  });
+
+  // Check for wins when marked squares change
+  React.useEffect(() => {
+    if (!grid || !grid.length) return;
+    
+    // Log for debugging
+    console.log('Checking for wins with', markedSquares.length, 'marked squares');
+    
+    // Update debug info
+    setDebug(prev => ({
+      winChecks: prev.winChecks + 1,
+      checkedAt: new Date().toISOString(),
+      lastWinFound: null
+    }));
+    
+    const wins = checkForWins(grid, markedSquares, gameMode, targetNumber);
+    console.log('Found wins:', wins);
+    
+    // Add new wins that haven't been recorded yet
+    wins.forEach(win => {
+      const isNewWin = !previousWins.some(prev => prev.type === win.type);
+      if (isNewWin) {
+        console.log("New win detected:", win.type);
+        addWin(win);
+        setLastWin(win);
+        
+        // Update debug info
+        setDebug(prev => ({
+          ...prev,
+          lastWinFound: win.type
+        }));
+        
+        // Always show win message for new wins
+        setShowWinMessage(true);
+        
+        // To ensure the animation re-triggers for subsequent wins, 
+        // we need to reset it briefly
+        setTimeout(() => {
+          setShowWinMessage(false);
+          setTimeout(() => {
+            setShowWinMessage(true);
+          }, 50);
+        }, 10);
+      }
+    });
+  }, [markedSquares, grid, gameMode, targetNumber, addWin, previousWins]);
+  
+  if (!grid || !grid.length) return null;
+
+  // Display debug info in development if needed
+  const debugInfo = false ? (
+    <div className="absolute top-0 right-0 bg-black/70 text-white text-xs p-1 rounded">
+      Checks: {debug.winChecks} | Last: {debug.lastWinFound || 'none'}
+    </div>
+  ) : null;
+
+  return (
+    <div className="relative w-full">
+      <div className="grid grid-cols-3 gap-1 sm:gap-2 p-2 sm:p-4 rounded-xl border border-amber-600/30 shadow-lg bg-black/30 relative">
+        {grid.flat().map((content, index) => {
+          const row = Math.floor(index / 3);
+          const col = index % 3;
+          const isSelected = markedSquares.some(([r, c]) => r === row && c === col);
+          const isWinning = lastWin && lastWin.squares ? 
+            lastWin.squares.some(([r, c]) => r === row && c === col) : 
+            false;
+          
+          return (
+            <BingoSquare 
+              key={index}
+              index={index}
+              content={content}
+              isSelected={isSelected}
+              isWinning={isWinning}
+            />
+          );
+        })}
+        
+        {/* Win Line Overlay */}
+        {lastWin && (
+          <WinLine win={lastWin} />
+        )}
+        
+        {debugInfo}
+      </div>
+      
+      {/* Win Message - Made more visible and larger */}
+      {showWinMessage && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.4 }}
+            className="bg-gradient-to-br from-amber-600 to-amber-800 
+                     px-8 py-6 rounded-lg text-white text-center
+                     shadow-xl border-2 border-amber-400"
+          >
+            <Trophy className="w-16 h-16 text-amber-300 mx-auto mb-3" />
+            <h3 className="text-3xl font-bold mb-2">BINGO!</h3>
+            <p className="text-amber-200 text-lg">{lastWin ? lastWin.message : "You've completed a line!"}</p>
+            <button 
+              onClick={() => setShowWinMessage(false)}
+              className="mt-4 px-4 py-2 bg-amber-800 hover:bg-amber-700 rounded-lg font-medium text-sm"
+            >
+              Continue
+            </button>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+`;
+
+// Create BingoSquare component
+const bingoSquareContent = `
+'use client';
+
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { useGameStore } from '@/lib/store/game-store';
+import { cn } from '@/lib/utils';
+
+interface BingoSquareProps {
+  index: number;
+  content: string;
+  isSelected: boolean;
+  isWinning?: boolean;
+  isLocked?: boolean;
+}
+
+export function BingoSquare({ 
+  index, 
+  content, 
+  isSelected, 
+  isWinning = false,
+  isLocked = false
+}: BingoSquareProps) {
+  const row = Math.floor(index / 3);
+  const col = index % 3;
+  const toggleSquare = useGameStore(state => state.toggleSquare);
+
+  const handleClick = () => {
+    if (!isLocked) {
+      toggleSquare(row, col);
+    }
+  };
+
+  return (
+    <motion.div
+      whileHover={{ scale: isLocked ? 1 : 1.02 }}
+      whileTap={{ scale: isLocked ? 1 : 0.98 }}
+      className={cn(
+        "aspect-square p-2 sm:p-3 rounded-lg cursor-pointer transition-colors text-center flex flex-col justify-center",
+        "text-xs sm:text-sm border border-gray-700 shadow-sm",
+        isSelected ? (
+          isWinning ? 
+            "bg-amber-500 border-amber-400 text-amber-950" : 
+            "bg-amber-700/90 border-amber-600/50 text-amber-50"
+        ) : (
+          "bg-gray-800/90 border-gray-700 text-gray-300 hover:bg-gray-700/90 hover:text-white"
+        ),
+        isLocked && "opacity-80 cursor-default"
+      )}
+      onClick={handleClick}
+    >
+      <div 
+        className={cn(
+          "flex-1 flex items-center justify-center font-medium",
+          (isSelected && !isWinning) && "text-shadow-sm"
+        )}
+      >
+        <div className="text-center leading-tight sm:leading-snug">
+          {content}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+`;
+
+// Create utils.ts for cn function
+const utilsContent = `
+// Utility function to conditionally join classNames
+export function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}
+`;
+
+// Create a GameProgress component to replace the Leaderboard
+const gameProgressContent = `
+'use client';
+
+import * as React from 'react';
+import { useGameStore } from '@/lib/store/game-store';
+import { motion } from 'framer-motion';
+import { Award, Check, Trophy } from 'lucide-react';
+
+export function GameProgress() {
+  const grid = useGameStore(state => state.grid);
+  const markedSquares = useGameStore(state => state.markedSquares);
+  const wins = useGameStore(state => state.wins);
+  const gameMode = useGameStore(state => state.gameMode);
+  const targetNumber = useGameStore(state => state.targetNumber);
+  
+  const totalSquares = grid.length ? grid.flat().length : 9;
+  const markedCount = markedSquares.length;
+  const progressPercentage = Math.round((markedCount / totalSquares) * 100);
+  
+  // Get the appropriate game objective based on game mode
+  const getGameObjective = () => {
+    switch (gameMode) {
+      case 'line':
+        return 'Complete a row, column, or diagonal';
+      case 'full_house':
+        return 'Mark all squares (Full House)';
+      case 'number':
+        return \`Mark \${targetNumber} squares\`;
+      default:
+        return 'Complete a line';
+    }
+  };
+  
+  // Display wins based on type
+  const renderWins = () => {
+    if (!wins.length) return null;
+    
+    return (
+      <div className="mt-4 space-y-2">
+        <h3 className="text-sm font-medium text-amber-400 mb-2">Achievements</h3>
+        <div className="space-y-2">
+          {wins.map((win, index) => (
+            <div 
+              key={index} 
+              className="flex items-center bg-gray-800 rounded-lg p-2 border border-gray-700"
+            >
+              {win.type.startsWith('row') && (
+                <Award className="mr-2 text-amber-400" size={16} />
+              )}
+              {win.type.startsWith('col') && (
+                <Award className="mr-2 text-amber-400" size={16} />
+              )}
+              {win.type.startsWith('diag') && (
+                <Trophy className="mr-2 text-amber-400" size={16} />
+              )}
+              {win.type === 'full_house' && (
+                <Trophy className="mr-2 text-amber-400" size={16} />
+              )}
+              <span className="text-xs text-gray-300">
+                {win.type === 'full_house' ? 'FULL HOUSE!' : 
+                 win.type.startsWith('row_') ? \`Row \${parseInt(win.type.split('_')[1]) + 1} Complete\` :
+                 win.type.startsWith('col_') ? \`Column \${parseInt(win.type.split('_')[1]) + 1} Complete\` :
+                 win.type === 'diag_1' ? 'Diagonal (↘) Complete' :
+                 win.type === 'diag_2' ? 'Diagonal (↙) Complete' : 
+                 win.message}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-lg font-semibold text-white">Game Progress</h2>
+      
+      <div>
+        <h3 className="text-sm font-medium text-gray-400 mb-2">Objective</h3>
+        <div className="p-2 bg-gray-800 rounded-lg text-sm text-white">
+          {getGameObjective()}
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-sm font-medium text-gray-400 mb-2">Progress</h3>
+        <div className="flex items-center text-sm text-white mb-2">
+          <span>{markedCount} of {totalSquares} squares marked</span>
+          <span className="ml-auto">{progressPercentage}%</span>
+        </div>
+        <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-amber-500"
+            initial={{ width: '0%' }}
+            animate={{ width: \`\${progressPercentage}%\` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+      </div>
+      
+      {renderWins()}
+    </div>
+  );
+}
+`;
+
+// Create simple app page content with GameProgress instead of Leaderboard
+const simpleAppPageContent = `
+'use client';
+
+import * as React from "react";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { useGameStore } from "@/lib/store/game-store";
+import { BingoGrid } from "@/components/bingo/BingoGrid";
+import { GameControls } from "@/components/bingo/GameControls";
+import { GameProgress } from "@/components/bingo/GameProgress";
+import { ApprenticeFacts } from "@/components/bingo/ApprenticeFacts";
+import { AdvisorAnimation } from "@/components/bingo/AdvisorAnimation";
+
+export default function Home() {
+  const teamAdvisor = useGameStore(state => state.teamAdvisor);
+  
+  // Helper function to format advisor name for display
+  function formatAdvisor(advisor) {
+    if (!advisor) return 'None';
+    
+    const nameMap = {
+      'karen': 'Karen Brady',
+      'tim': 'Tim Campbell',
+      'claude': 'Claude Littner',
+      'nick': 'Nick Hewer',
+      'margaret': 'Margaret Mountford'
+    };
+    
+    return nameMap[advisor] || advisor;
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">
+          <span className="text-amber-400">The Apprentice</span>
+          <span className="text-white"> Bingo</span>
+        </h1>
+        
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
+          {/* Left sidebar - Lord Sugar */}
+          <div className="lg:col-span-3 order-2 lg:order-1">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
+              <div className="relative z-10">
+                <motion.div className="mt-4 flex items-center justify-center">
+                  <AdvisorAnimation
+                    type="lord-sugar"
+                    size="large"
+                    className="rounded-lg shadow-lg transition-transform duration-300 border border-amber-700/20"
+                    forceVideo={true}
+                  />
+                </motion.div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content - Bingo grid and controls */}
+          <div className="lg:col-span-6 space-y-4 sm:space-y-6 order-1 lg:order-2">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
+              <div className="relative z-10">
+                <BingoGrid />
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-6 rounded-lg shadow-xl border border-gray-700 relative overflow-hidden">
+              <div className="relative z-10">
+                <GameControls />
+              </div>
+            </div>
+          </div>
+
+          {/* Right sidebar - Game Progress */}
+          <div className="lg:col-span-3 order-3">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3 sm:p-5 rounded-lg shadow-xl border border-amber-800/30 h-full relative overflow-hidden">
+              <div className="relative z-10 flex flex-col">
+                <GameProgress />
+                
+                {teamAdvisor && (
+                  <div className="mt-6">
+                    <h3 className="text-center text-white text-sm mb-3">Your Advisor</h3>
+                    <div className="flex justify-center">
+                      <motion.div className="w-24 h-24 sm:w-32 sm:h-32">
+                        <AdvisorAnimation
+                          type="advisor"
+                          advisor={teamAdvisor}
+                          size="large"
+                          animate={false}
+                        />
+                      </motion.div>
+                    </div>
+                    <p className="mt-2 text-center font-medium text-amber-400">
+                      {formatAdvisor(teamAdvisor)}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Apprentice Facts Component */}
+                <div className="mt-6">
+                  <ApprenticeFacts />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+`;
+
+// Add factsFileContent definition
+const factsFileContent = `
+/**
+ * Apprentice Facts
+ * A collection of interesting facts about The Apprentice TV show.
+ */
+
+export const apprenticeFacts = [
+  "Fact 1: The Apprentice debuted in 2005.",
+  "Fact 2: Known for its iconic boardroom sessions.",
+  "Fact 3: It has served as a launchpad for many business careers.",
+  "Fact 4: The show is famous for its dramatic confrontations.",
+  "Fact 5: It continues to inspire entrepreneurial spirit."
+];
+`;
+
+// Create list of files to write
+const filesToWrite = [
   { path: path.join(libDir, 'animations.ts'), content: animationsContent },
   { path: path.join(libDir, 'data.ts'), content: dataFileContent },
-  { path: path.join(libDir, 'facts.ts'), content: 'export const apprenticeFacts = ["Lord Sugar started with just £100", "The show has been running since 2005", "Winners receive a £250,000 investment", "Over 100,000 people apply each series", "Karen Brady joined as an advisor in 2009", "Tim Campbell was the first winner of The Apprentice", "In the US version, the show was hosted by Donald Trump", "Claude Littner was originally just for the interview episodes", "In total, Lord Sugar has invested over £2.5 million in winners"];' },
+  { path: path.join(libDir, 'facts.ts'), content: factsFileContent },
   { path: path.join(libDir, 'sounds.ts'), content: soundsFileContent },
   { path: path.join(libDir, 'types.ts'), content: 'export type GameMode = "line" | "full_house" | "number";\nexport type WinType = string;\nexport interface Team { id: string; name: string; advisor: string; markedSquares?: [number, number][]; wins: Win[]; createdAt?: string; userId?: string; }\nexport interface Win { type: string; squares: [number, number][]; message: string; };' },
-  { path: path.join(libDir, 'utils.ts'), content: 'export const cn = (...args) => args.filter(Boolean).join(" ");' },
+  { path: path.join(libDir, 'utils.ts'), content: utilsContent },
   { path: path.join(storeDir, 'game-store.ts'), content: gameStoreContent },
-  { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./facts";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
+  { path: path.join(libDir, 'index.ts'), content: '// Export from lib directory\nexport * from "./animations";\nexport * from "./data";\nexport * from "./sounds";\nexport * from "./types";\nexport * from "./utils";' },
   { path: path.join(storeDir, 'index.ts'), content: '// Export from store directory\nexport * from "./game-store";' },
-  // Create AdvisorAnimation component
-  { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent }
+  // Create components
+  { path: path.join(bingoComponentsDir, 'AdvisorAnimation.tsx'), content: advisorAnimationContent },
+  { path: path.join(bingoComponentsDir, 'WinLine.tsx'), content: winLineContent },
+  { path: path.join(bingoComponentsDir, 'WinMessage.tsx'), content: winMessageContent },
+  { path: path.join(bingoComponentsDir, 'BingoGrid.tsx'), content: enhancedBingoGridContent },
+  { path: path.join(bingoComponentsDir, 'BingoSquare.tsx'), content: bingoSquareContent },
+  { path: path.join(bingoComponentsDir, 'GameProgress.tsx'), content: gameProgressContent },
+  { path: path.join(__dirname, 'src', 'app', 'page.tsx'), content: simpleAppPageContent }
 ];
 
 // Create all the files
-files.forEach(file => {
+filesToWrite.forEach(file => {
   try {
     // Create parent directories if they don't exist
     const dir = path.dirname(file.path);
@@ -1036,4 +1711,4 @@ const result = spawnSync('npm', ['run', 'build'], {
   env: { ...process.env }
 });
 
-process.exit(result.status); 
+process.exit(result.status);
