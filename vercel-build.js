@@ -659,8 +659,9 @@ export const useGameStore = create(
       initQuickGame: () => {
         console.log('Initializing quick game mode');
         
-        const now = Date.now();
-        const quickTeamId = \`quick-${now}\`;
+        // Generate a unique ID with timestamp
+        const timestamp = Date.now();
+        const quickTeamId = 'quick-' + timestamp;
         
         // Create a quick game team
         const quickTeam = {
