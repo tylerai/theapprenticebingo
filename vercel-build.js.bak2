@@ -1500,129 +1500,6 @@ export const apprenticeFacts = [
 ];
 `;
 
-// Add apprenticeFactsContent definition
-const apprenticeFactsContent = `
-'use client';
-
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSounds } from '@/lib/sounds';
-
-// Define facts directly in the component
-const facts = [
-  "The UK version of The Apprentice started in 2005, two years after the US version.",
-  "The iconic boardroom used for filming is not Lord Sugar's real office - it is a set built specifically for the show.",
-  "The famous You're Fired catchphrase was originally You're Dismissed in early planning.",
-  "During filming, candidates typically work 18-hour days, 6 days a week.",
-  "Lord Sugar's receptionist Frances has been with the show since it started.",
-  "The dramatic walk of shame with luggage was added in series 2 - candidates need to keep a packed suitcase ready at all times.",
-  "Nick Hewer worked with Lord Sugar for nearly 30 years before joining as his advisor on the show.",
-  "Margaret Mountford left her role as an advisor to complete her PhD in Papyrology.",
-  "Karen Brady is actually a Conservative Party life peer in the House of Lords.",
-  "Lord Sugar does not keep the 250,000 pound investment money in a briefcase as shown in the opening credits.",
-  "Tim Campbell, who won the first series, later received an MBE for services to enterprise culture.",
-  "Candidates do not immediately go home after being fired - they are kept in a separate house to maintain secrecy.",
-  "The famous black cab that takes fired candidates away often drives around the block and drops them back at the hotel.",
-  "The early morning wake-up calls shown on camera are real, with production calling candidates as early as 4 AM.",
-  "In the first series, the prize was a 100,000 pound job working for Lord Sugar. This changed to a business investment in later series."
-];
-
-export function ApprenticeFacts() {
-  const [factIndex, setFactIndex] = React.useState(0);
-  const [progress, setProgress] = React.useState(100);
-  const { playClick, playNotification } = useSounds();
-  
-  // Generate a random fact that hasn't been shown recently
-  const getRandomFact = React.useCallback(() => {
-    const randomIndex = Math.floor(Math.random() * facts.length);
-    setFactIndex(randomIndex);
-    playNotification?.();
-  }, [playNotification]);
-
-  // Set up the timer for fact rotation
-  React.useEffect(() => {
-    // Set initial fact
-    getRandomFact();
-
-    // Reset progress when fact changes
-    setProgress(100);
-    
-    // Set up a timer that updates every second
-    const timerInterval = setInterval(() => {
-      setProgress(prev => {
-        // Decrease by 1.67 to complete in 60 seconds
-        const newProgress = prev - 1.67;
-        if (newProgress <= 0) {
-          getRandomFact();
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerInterval);
-  }, [getRandomFact]);
-
-  return (
-    <Card className="overflow-hidden relative bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl border-amber-800/30">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_500px_at_50%_40%,#3b3b3b,transparent)]"></div>
-      
-      <CardHeader className="relative z-10 border-b border-gray-800 bg-gray-900/50">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <span className="text-amber-500">🎬</span> 
-            <span className="text-white">Apprentice Facts</span>
-          </CardTitle>
-        </div>
-        
-        {/* Progress bar */}
-        <div className="h-1 w-full bg-gray-800 mt-2 rounded-full overflow-hidden">
-          <motion.div 
-            className="h-full bg-amber-500"
-            style={{ width: progress + '%' }}
-            transition={{ ease: "linear" }}
-          />
-        </div>
-      </CardHeader>
-      
-      <CardContent className="relative z-10 p-4">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={factIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-start gap-2"
-          >
-            <div className="text-2xl text-amber-500 opacity-70">"</div>
-            <p className="text-gray-200 italic leading-relaxed min-h-[3rem] text-sm">
-              {facts[factIndex]}
-            </p>
-            <div className="text-2xl text-amber-500 opacity-70 self-end">"</div>
-          </motion.div>
-        </AnimatePresence>
-        
-        {/* Static Fact controls */}
-        <div className="flex justify-center mt-3">
-          <button 
-            className="bg-gray-800/70 hover:bg-gray-700/70 border border-amber-800/30 text-amber-300 hover:text-amber-200 px-3 py-1 rounded text-sm"
-            onClick={() => {
-              playClick?.();
-              getRandomFact();
-            }}
-          >
-            New Fact
-          </button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-`;
-
 // Create list of files to write
 const filesToWrite = [
   { path: path.join(libDir, 'animations.ts'), content: animationsContent },
@@ -1652,19 +1529,19 @@ filesToWrite.forEach(file => {
     const dir = path.dirname(file.path);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
-      console.log('Created directory: ' + dir);
+      console.log(`📁 Created directory: ${dir}`);
     }
 
     // Always create/update the files to ensure latest implementation
-    console.log('Creating/updating file: ' + file.path);
+    console.log(`📝 Creating/updating file: ${file.path}`);
     fs.writeFileSync(file.path, file.content);
   } catch (err) {
-    console.error('Error creating file ' + file.path + ':', err);
+    console.error(`❌ Error creating file ${file.path}:`, err);
   }
 });
 
 // Run standard Next.js build
-console.log('Running standard Next.js build...');
+console.log('🔨 Running standard Next.js build...');
 
 const result = spawnSync('npm', ['run', 'build'], {
   stdio: 'inherit',
