@@ -119,6 +119,7 @@
 ├── TESTING.md
 ├── app_output.log
 ├── babel.config.js
+├── closings.txt
 ├── deploy.sh
 ├── deployment.md
 ├── fix-tests.sh
@@ -130,6 +131,7 @@
 ├── multiplayer.test.js
 ├── next-env.d.ts
 ├── next.config.js
+├── openings.txt
 ├── package-lock.json
 ├── package.json
 ├── postcss.config.js
@@ -139,8 +141,7 @@
 ├── tsconfig.server.json
 ├── utils.test.js
 ├── vercel-build.js
-├── vercel-build.js.bak
 └── vercel.json
 
-23 directories, 117 files
+23 directories, 118 files
 ```
