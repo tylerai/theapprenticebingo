@@ -521,6 +521,18 @@ export const useGameStore = create(
           wins: [],
           previousWins: []
         });
+        
+        // Reset team data in the teams array for leaderboard
+        const { teams } = get();
+        if (teams.length > 0) {
+          const updatedTeams = teams.map(team => ({
+            ...team,
+            markedSquares: [],
+            wins: []
+          }));
+          
+          set({ teams: updatedTeams });
+        }
       },
 
       regenerateCard: (seed) => {
@@ -567,19 +579,20 @@ export const useGameStore = create(
       // Functions that start the game modes
       initSinglePlayerMode: (teamName = 'Solo Player', advisor = 'karen') => {
         console.log("Initializing single player mode:", { teamName, advisor });
-        // Implementation for Single Player mode
-        set({ 
-          teamId: 'solo-' + Date.now(),
-          teamName: teamName || 'Solo Player',
-          teamAdvisor: advisor,
-          isSinglePlayer: true,
-          isHost: true,
-          soloSetupMode: false,
-          markedSquares: [], // Ensure marked squares are reset
-          wins: [],          // Ensure wins are reset
-          previousWins: [],  // Ensure previous wins are reset
-          isLocked: false    // Ensure game is unlocked
-        });
+        
+        // Create a single player team ID
+        const singlePlayerId = 'solo-' + Date.now();
+        
+        // Create a team object for the single player
+        const singlePlayerTeam = {
+          id: singlePlayerId,
+          name: teamName || 'Solo Player',
+          advisor,
+          markedSquares: [],
+          wins: [],
+          createdAt: new Date().toISOString(),
+          userId: singlePlayerId
+        };
         
         // Generate a grid with actual content
         const options = getRandomBingoOptions(9);
@@ -591,7 +604,19 @@ export const useGameStore = create(
           }
           grid.push(row);
         }
-        set({ grid });
+        
+        // Ensure the state is completely reset
+        set({ 
+          ...initialState,
+          teamId: singlePlayerId,
+          teamName: teamName || 'Solo Player',
+          teamAdvisor: advisor,
+          isSinglePlayer: true,
+          isHost: true,
+          soloSetupMode: false,
+          grid,
+          teams: [singlePlayerTeam] // Ensure the team is in the teams array for leaderboard/win tracking
+        });
         
         console.log("Single player mode initialized with grid");
         
@@ -613,31 +638,22 @@ export const useGameStore = create(
         }
       },
 
-      initQuickGameMode: () => {
-        console.log("Initializing quick game mode");
-        // Implementation for Quick Game mode
-        const teamNames = [
-          'First Forte', 'Impact', 'Velocity', 'Invicta', 'Stealth', 'Eclipse',
-          'Alpha', 'Renaissance', 'Ignite', 'Empire', 'Apollo', 'Synergy'
-        ];
-        const advisors = ['karen', 'tim', 'claude', 'nick', 'margaret'];
+      initQuickGame: () => {
+        console.log('Initializing quick game mode');
         
-        // Pick random team name and advisor
-        const teamName = teamNames[Math.floor(Math.random() * teamNames.length)];
-        const advisor = advisors[Math.floor(Math.random() * advisors.length)];
+        const now = Date.now();
+        const quickTeamId = \`quick-${now}\`;
         
-        set({ 
-          teamId: 'quick-' + Date.now(),
-          teamName,
-          teamAdvisor: advisor,
-          isSinglePlayer: true,
-          isHost: true,
-          soloSetupMode: false,
-          markedSquares: [], // Ensure marked squares are reset
-          wins: [],          // Ensure wins are reset
-          previousWins: [],  // Ensure previous wins are reset
-          isLocked: false    // Ensure game is unlocked
-        });
+        // Create a quick game team
+        const quickTeam = {
+          id: quickTeamId,
+          name: 'Quick Player',
+          advisor: 'karen',
+          markedSquares: [],
+          wins: [],
+          createdAt: new Date().toISOString(),
+          userId: quickTeamId
+        };
         
         // Generate a grid with actual content
         const options = getRandomBingoOptions(9);
@@ -649,16 +665,31 @@ export const useGameStore = create(
           }
           grid.push(row);
         }
-        set({ grid });
         
-        console.log("Quick game mode initialized with random team and advisor");
+        // Reset the store to a fresh state
+        set({
+          ...initialState,
+          teamId: quickTeamId,
+          teamName: 'Quick Player',
+          teamAdvisor: 'karen',
+          isHost: true,
+          isSinglePlayer: true,
+          gameMode: 'line',
+          grid,
+          teams: [quickTeam], // Add the quick team to the teams array
+          isLocked: false,
+          soloSetupMode: false
+        });
         
-        // Use history API instead of reload
+        console.log('Quick game mode initialized with random team and advisor');
+        
+        // Navigate to game page
         if (typeof window !== 'undefined') {
           try {
             window.history.pushState({}, '', '/');
             window.dispatchEvent(new Event('popstate'));
-            // Dispatch a custom event
+            
+            // Dispatch a game-started event
             const gameStartEvent = new CustomEvent('game-started', { 
               detail: { mode: 'quick-game' } 
             });
@@ -675,14 +706,11 @@ export const useGameStore = create(
         console.log("Preparing solo setup mode");
         // Implementation for preparing solo mode
         set({ 
+          ...initialState,
           isSinglePlayer: true,
           soloSetupMode: true,
           teamId: 'solo-setup-' + Date.now(),
-          // Reset other game state
-          markedSquares: [],
-          wins: [],
-          previousWins: [],
-          isLocked: false
+          isHost: true
         });
         
         // Use history API instead of reload
